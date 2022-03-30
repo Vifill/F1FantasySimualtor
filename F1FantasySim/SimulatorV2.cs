@@ -30,11 +30,23 @@ namespace F1FantasySim
 
             CalculateQualifying(appPlayerPoints);
             CalculateRace(appPlayerPoints);
+            CalculateTurboDriver(appPlayerPoints);
 
             var constructor = team.Single(a => a.is_constructor);
             appPlayerPoints.Add(constructor, appPlayerPoints.Where(a => a.Key.team_id == constructor.team_id).Sum(a => a.Value));
 
-            return appPlayerPoints.Where(a => team.Contains(a.Key)).ToDictionary(a => a.Key, b => b.Value);
+            var result = appPlayerPoints.Where(a => team.Select(b => b.id).Contains(a.Key.id)).ToDictionary(a => a.Key, b => b.Value);
+            result.Comparer
+            return 
+        }
+
+        private void CalculateTurboDriver(Dictionary<ApiModel, int> appPlayerPoints)
+        {
+            foreach (var driver in appPlayerPoints)
+            {
+
+            }
+
         }
 
         private void CalculateQualifying(Dictionary<ApiModel, int> drivers)

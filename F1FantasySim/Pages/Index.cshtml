@@ -5,40 +5,75 @@
 }
 
 <body>
-    <div class="text-center">
-        <div class="col-md-3">
-            <form method="post">
-                <table class="d-lg-table table-bordered table table-light">
+    <form method="post">
+        <label>Max Budget</label>
+        <input asp-for="MaxBudget" /><br /><br />
+        <div class="text-center">
+            <div class="col-md-3">
+                @*<table style="float: left;">
                     <thead class="thead thead-dark">
-                        <tr>
-                            <th>Name</th>
-                            <th>Team</th>
-                        </tr>
+                    <tr>
+                    <th>Pos</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @{
+                    int counter = 1;
+                    }
+                    @foreach (var obj in Model.Drivers)
+                    {
+                    <tr>
+                    <td>
+                    @counter
+                    </td>
+                    </tr>
+                    {
+                    counter++;
+                    }
+                    }
+                    </tbody>
+                    </table>*@
+                <table class="table table-light table-striped table-hover">
+                    <thead>
+                    <tr>
+                        @*<th>Pos</th>*@
+                        <th>Name</th>
+                        <th>Team</th>
+                    </tr>
                     </thead>
                     <tbody id="sortable">
-                        @foreach (var obj in Model.Drivers)
-                        {
-                            <tr class="list-item" id="@obj.id">
-                                <td width="50%">
-                                    @obj.display_name
-                                    <input type="hidden" name="ids" value="@obj.id">
-                                </td>
-                                <td width="20%">@obj.team_abbreviation</td>
-                            </tr>
-                        }
+                    @* @{
+                            int counter = 0;
+                            }*@
+                    @foreach (var obj in Model.Drivers)
+                    {
+                            @*{
+                                counter++;
+                                }*@
+                        <tr class="list-item" id="@obj.id">
+                            @*<td class="pos">@counter</td>*@
+                            <td width="50%">
+                                @obj.display_name
+                                <input type="hidden" name="ids" value="@obj.id">
+                            </td>
+                            <td width="20%">@obj.team_abbreviation</td>
+                        </tr>
+                    }
                     </tbody>
                 </table>
-                <input class="text-left" type="submit" value="Submit" />
-            </form>
+            </div>
         </div>
+        <input class="text-left" type="submit" value="Submit" />
+        <br/>
         @if (Model.BestTeams != null && Model.BestTeams.Any())
         {
             <br />
             <div class="col-md-6">
-                <table class="d-lg-table table-bordered">
+                <table class="d-lg-table table table-light table-bordered">
                     <thead class="thead-dark">
                         <tr>
                             <th>Drivers</th>
+                            <th>Constructor</th>
                             <th>Points</th>
                             <th>Price</th>
                         </tr>
@@ -50,26 +85,25 @@
                                 <td>
                                     @foreach (var driver in team.Drivers)
                                     {
-                                        @driver.last_name
+                                        <text>@driver.last_name&nbsp;</text>
                                     }
+                                </td>
+                                <td width="20%">
+                                    @team.Constructor.team_abbreviation
                                 </td>
                                 <td width="20%">
                                     @team.Points
                                 </td>
                                 <td width="20%">
-                                    @team.Constructor.team_abbreviation
+                                    @team.Price.ToString("F1")
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-
             </div>
         }
-
-
-    </div>
-    </div>
+    </form>
 </body>
 
 @section Scripts{
@@ -78,7 +112,24 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
 <script type="text/javascript">
     $(function () {
-        $("#sortable").sortable();
+        var fixHelperModified = function (e, tr) {
+            var $originals = tr.children();
+            var $helper = tr.clone();
+            $helper.children().each(function (index) {
+                $(this).width($originals.eq(index).width())
+            });
+            return $helper;
+        };
+
+        $("#sortable").sortable({
+            helper: fixHelperModified,
+            cancel: ".ui-state-disabled",
+            items: "tr:not(.ui-state-disabled)"
+        }).disableSelection();
+
+        $(".pos").addClass("ui-state-disabled");
+
+        //$('#sortable').sortable();
     });
 </script>
 }

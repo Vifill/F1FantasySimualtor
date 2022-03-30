@@ -17,9 +17,9 @@ namespace F1FantasySim.Pages
         public IEnumerable<ApiModel> Constructors { get; set; }
         public List<CalculationTeamModel> BestTeams { get; set; }
 
-        private readonly int MaxBudget = 103;
+        public double MaxBudget { get; set; } = 103;
 
-        private Combinations<ApiModel> CombinationCache;
+        private static Combinations<ApiModel> CombinationCache;
 
         public IndexModel(ILogger<IndexModel> logger)
         {
@@ -46,6 +46,7 @@ namespace F1FantasySim.Pages
             await GetApiDataAsync();
 
             var raceResult = ids.Select(a => Drivers.Single(b => b.id == a)).ToList();
+            Drivers = raceResult;
             SimulatorV2 simulator = new SimulatorV2(raceResult);
 
             //Get all driver combinations
