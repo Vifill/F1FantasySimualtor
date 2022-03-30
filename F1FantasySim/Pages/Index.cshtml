@@ -1,0 +1,84 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<body>
+    <div class="text-center">
+        <div class="col-md-3">
+            <form method="post">
+                <table class="d-lg-table table-bordered table table-light">
+                    <thead class="thead thead-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Team</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sortable">
+                        @foreach (var obj in Model.Drivers)
+                        {
+                            <tr class="list-item" id="@obj.id">
+                                <td width="50%">
+                                    @obj.display_name
+                                    <input type="hidden" name="ids" value="@obj.id">
+                                </td>
+                                <td width="20%">@obj.team_abbreviation</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <input class="text-left" type="submit" value="Submit" />
+            </form>
+        </div>
+        @if (Model.BestTeams != null && Model.BestTeams.Any())
+        {
+            <br />
+            <div class="col-md-6">
+                <table class="d-lg-table table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Drivers</th>
+                            <th>Points</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.BestTeams)
+                        {
+                            <tr>
+                                <td>
+                                    @foreach (var driver in team.Drivers)
+                                    {
+                                        @driver.last_name
+                                    }
+                                </td>
+                                <td width="20%">
+                                    @team.Points
+                                </td>
+                                <td width="20%">
+                                    @team.Constructor.team_abbreviation
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </div>
+        }
+
+
+    </div>
+    </div>
+</body>
+
+@section Scripts{
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $("#sortable").sortable();
+    });
+</script>
+}

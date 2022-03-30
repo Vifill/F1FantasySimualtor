@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "F1FantasySim", "F1FantasySim\F1FantasySim.csproj", "{1AB5D41D-0355-452D-8CE1-FCB1A7CEA7D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "F1FantasyTests", "F1FantasyTests\F1FantasyTests.csproj", "{A17F52CF-BA25-444D-B6E5-42D051199606}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1AB5D41D-0355-452D-8CE1-FCB1A7CEA7D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AB5D41D-0355-452D-8CE1-FCB1A7CEA7D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AB5D41D-0355-452D-8CE1-FCB1A7CEA7D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AB5D41D-0355-452D-8CE1-FCB1A7CEA7D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A17F52CF-BA25-444D-B6E5-42D051199606}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A17F52CF-BA25-444D-B6E5-42D051199606}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A17F52CF-BA25-444D-B6E5-42D051199606}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A17F52CF-BA25-444D-B6E5-42D051199606}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6455D055-7919-4C9A-A8BA-12BDE684A22D}
+	EndGlobalSection
+EndGlobal
