@@ -2,7 +2,7 @@
 {
     public class CalculationTeamModel
     {
-        public CalculationTeamModel(List<ApiModel> drivers, ApiModel constructor, int points, double price)
+        public CalculationTeamModel(List<CompetitorViewModel> drivers, CompetitorViewModel constructor, int points, double price)
         {
             Drivers = drivers;
             Constructor = constructor;
@@ -10,8 +10,8 @@
             Price = price;
         }
 
-        public List<ApiModel> Drivers { get; set; }
-        public ApiModel Constructor { get; set; }
+        public List<CompetitorViewModel> Drivers { get; set; }
+        public CompetitorViewModel Constructor { get; set; }
         public int Points { get; set; }
         public double Price { get; set; }
     }

@@ -69,19 +69,19 @@ namespace F1FantasySim.Pages
 
             var filteredlist = teamList.Where(a => a.Sum(b => b.price) < MaxBudget);
 
-            List<Dictionary<ApiModel, int>> simulatedTeams = new List<Dictionary<ApiModel, int>>();
+            List<List<CompetitorViewModel>> simulatedTeams = new List<List<CompetitorViewModel>>();
             foreach(var team in filteredlist)
             {
                 var simulatedResult = simulator.CalculatePoints(team);
                 simulatedTeams.Add(simulatedResult);
             }
 
-            BestTeams = simulatedTeams.OrderByDescending(team => team.Sum(a => a.Value)).Take(10).Select(a=> 
+            BestTeams = simulatedTeams.OrderByDescending(team => team.Sum(a => a.Points)).Take(10).Select(a=> 
             new CalculationTeamModel(
-                a.Keys.Where(b => !b.is_constructor).ToList(), 
-                a.Keys.Single(b=> b.is_constructor), 
-                a.Values.Sum(), 
-                a.Keys.Sum(b => b.price))).ToList();
+                a, 
+                a.Single(b=> b.ApiModel.is_constructor), 
+                a.Sum(a=> a.Points), 
+                a.Sum(b => b.ApiModel.price))).ToList();
 
             return Page();
         }
