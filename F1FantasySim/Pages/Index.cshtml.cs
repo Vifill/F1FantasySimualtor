@@ -47,7 +47,7 @@ namespace F1FantasySim.Pages
 
             var raceResult = ids.Select(a => Drivers.Single(b => b.id == a)).ToList();
             Drivers = raceResult;
-            SimulatorV2 simulator = new SimulatorV2(raceResult);
+            SimulatorV2 simulator = new SimulatorV2(raceResult, Drivers.Where(a=> a.is_constructor).ToList());
 
             //Get all driver combinations
             if(CombinationCache == null || CombinationCache.Count == 0)

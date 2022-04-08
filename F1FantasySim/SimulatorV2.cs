@@ -1,4 +1,5 @@
-﻿using F1FantasySim.Models;
+﻿using System.Diagnostics;
+using F1FantasySim.Models;
 
 namespace F1FantasySim
 {
@@ -12,26 +13,35 @@ namespace F1FantasySim
         private readonly int QualiBeatTeammatePoints = 2;
         private readonly int RaceBeatTeammatePoints = 3;
 
+        private readonly int DriverStreaks = 5;
+        private readonly int ConstructorStreaks = 3;
+        private readonly int QualiStreakPoints = 5;
+        private readonly int RaceStreakPoints = 10;
+        private readonly List<ApiModel> AllConstructors;
+
+
         private static Dictionary<ApiModel, int> AllPlayerPoints;
 
-
-        public SimulatorV2(List<ApiModel> raceResult)
+        public SimulatorV2(List<ApiModel> raceResult, List<ApiModel> Constructors)
         {
             RaceResult = raceResult;
+            AllConstructors = Constructors;
             AllPlayerPoints = null;
         }
 
         public List<CompetitorViewModel> CalculatePoints(List<ApiModel> team)
         {
-            if(AllPlayerPoints == null || AllPlayerPoints.Count == 0)
+            if (AllPlayerPoints == null || AllPlayerPoints.Count == 0)
             {
                 AllPlayerPoints = CalculatePoints();
             }
 
             var constructor = team.Single(a => a.is_constructor);
 
-            var teamPoints = AllPlayerPoints.Where(a => team.Select(b => b.id).Contains(a.Key.id)).Select(a=> new CompetitorViewModel(a.Key, a.Value, false)).OrderByDescending(a => a.Points).ToList();
-            teamPoints.Add(new CompetitorViewModel(constructor, AllPlayerPoints.Where(a => a.Key.team_id == constructor.team_id).Sum(a => a.Value), false));
+            var teamPoints = AllPlayerPoints.Where(a => team.Select(b => b.id).Contains(a.Key.id)).Select(a => new CompetitorViewModel(a.Key, a.Value, false)).OrderByDescending(a => a.Points).ToList();
+
+            var constructorViewModel = new CompetitorViewModel(constructor,
+                AllPlayerPoints.Where(a => a.Key.team_id == constructor.team_id).Sum(a => a.Value), false);
 
             //Set turbo driver
             var turboDriver = teamPoints.First(a => !a.ApiModel.is_constructor && a.ApiModel.price < 20);
@@ -52,7 +62,51 @@ namespace F1FantasySim
 
             CalculateQualifying(appPlayerPoints);
             CalculateRace(appPlayerPoints);
+            CalculateDriverStreak(appPlayerPoints);
+
+
+            foreach(var constructor in AllConstructors)
+            {
+                appPlayerPoints.Add(constructor, 0);
+                CalculateConstructorStreak(appPlayerPoints, constructor, QualiStreakPoints);
+                CalculateConstructorStreak(appPlayerPoints, constructor, RaceStreakPoints);
+            }
+
             return appPlayerPoints;
+        }
+
+        private void CalculateDriverStreak(Dictionary<ApiModel, int> drivers)
+        {
+            //Driver Qualifying streak
+            CalculateDriverStreak(drivers, DriverStreaks, QualiStreakPoints);
+            //Driver Race streak
+            CalculateDriverStreak(drivers, DriverStreaks, RaceStreakPoints);
+        }
+
+        private void CalculateDriverStreak(Dictionary<ApiModel, int> drivers, int streakNumber, int pointsForStreak)
+        {
+            foreach (var key in drivers.Keys)
+            {
+                int position = RaceResult.IndexOf(key);
+
+                if (int.TryParse(key.streak_events_progress.top_ten_in_a_row_race_progress, out int streak))
+                {
+                    if (position < 10 && streak == streakNumber - 1)
+                    {
+                        drivers[key] += pointsForStreak;
+                    }
+                }
+            }
+        }
+
+        private void CalculateConstructorStreak(Dictionary<ApiModel, int> players, ApiModel constructor, int pointsForStreak)
+        {
+            var teamDrivers = players.Where(a => !a.Key.is_constructor && a.Key.team_id == constructor.team_id);
+
+            if (teamDrivers.All(a => RaceResult.IndexOf(a.Key) < 10 && int.Parse(a.Key.streak_events_progress.top_ten_in_a_row_qualifying_progress) >= ConstructorStreaks - 1))
+            {
+                players[constructor] += pointsForStreak;
+            }
         }
 
         private void CalculateQualifying(Dictionary<ApiModel, int> drivers)
