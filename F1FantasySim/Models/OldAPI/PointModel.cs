@@ -1,4 +1,4 @@
-﻿namespace F1FantasySim.Models
+﻿namespace F1FantasySim.Models.OldAPI
 {
     public class PointModel
     {

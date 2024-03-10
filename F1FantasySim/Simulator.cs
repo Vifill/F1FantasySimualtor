@@ -1,4 +1,4 @@
-﻿using F1FantasySim.Models;
+﻿using F1FantasySim.Models.OldAPI;
 
 namespace F1FantasySim
 {

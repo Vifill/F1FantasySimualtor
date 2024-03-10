@@ -1,5 +1,5 @@
 using F1FantasySim;
-using F1FantasySim.Models;
+using F1FantasySim.Models.OldAPI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using System.Collections.Generic;

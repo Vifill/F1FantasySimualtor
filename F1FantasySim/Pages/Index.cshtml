@@ -3,68 +3,80 @@
 @{
     ViewData["Title"] = "Home page";
 }
-
 <body>
     <form method="post">
         <label>Max Budget</label>
         <input asp-for="MaxBudget" /><br /><br />
-        <div class="text-center">
+
+        <div class="tables-container" style="display: flex; justify-content: space-around;">
+            
+            <!-- Qualifying Results Table -->
             <div class="col-md-3">
-                @*<table style="float: left;">
-                    <thead class="thead thead-dark">
-                    <tr>
-                    <th>Pos</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                    int counter = 1;
-                    }
-                    @foreach (var obj in Model.Drivers)
-                    {
-                    <tr>
-                    <td>
-                    @counter
-                    </td>
-                    </tr>
-                    {
-                    counter++;
-                    }
-                    }
-                    </tbody>
-                    </table>*@
+                <h2 class="table-heading" style="text-align: center;">Qualifying</h2> <!-- This is the new heading for Qualifying -->
                 <table class="table table-light table-striped table-hover">
                     <thead>
                         <tr>
-                            @*<th>Pos</th>*@
+                            <th>Position</th> <!-- New Position Column -->
                             <th>Name</th>
                             <th>Team</th>
+                            <th>OverallPoints</th>
+                            <th>Value</th>
+                            <th>PPM</th>
                         </tr>
                     </thead>
-                    <tbody id="sortable">
-                        @* @{
-                            int counter = 0;
-                            }*@
+                    <tbody id="sortable-qualifying">
                         @foreach (var obj in Model.Drivers)
                         {
-                            @*{
-                                counter++;
-                                }*@
-                            <tr class="list-item" id="@obj.id">
-                                @*<td class="pos">@counter</td>*@
-                                <td width="50%">
-                                    @obj.display_name
-                                    <input type="hidden" name="ids" value="@obj.id">
-                                </td>
-                                <td width="20%">@obj.team_abbreviation</td>
+                            <tr class="list-item" id="q-@obj.PlayerId">
+                                <td class="position"></td> <!-- Placeholder for position value -->
+                                <td width="50%">@obj.DisplayName<input type="hidden" name="qualifyingIds" value="@obj.PlayerId"></td>
+                                <td width="20%">@obj.TeamName</td>
+                                <td width="20%">@obj.OverallPpints</td>
+                                <td width="20%">@obj.Value</td>
+                                <td width="20%">@{
+                                        var pointsPerMillion = obj.Value > 0 ? @obj.PointsPerMill.ToString("F2") : "N/A";
+                                    }@pointsPerMillion</td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+
+            <!-- Race Results Table (Existing Table) -->
+            <div class="col-md-3">
+                <h2 class="table-heading" style="text-align: center;">Race</h2> <!-- This is the new heading for Race -->
+                <table class="table table-light table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Position</th> <!-- New Position Column -->
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>OverallPoints</th>
+                            <th>Value</th>
+                            <th>PPM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sortable">
+                        @foreach (var obj in Model.Drivers)
+                        {
+                            <tr class="list-item" id="@obj.PlayerId">
+                                <td class="position"></td> <!-- Placeholder for position value -->
+                                <td width="50%">@obj.DisplayName<input type="hidden" name="ids" value="@obj.PlayerId"></td>
+                                <td width="20%">@obj.TeamName</td>
+                                <td width="20%">@obj.OverallPpints</td>
+                                <td width="20%">@obj.Value</td>
+                                <td width="20%">@{var pointsPerMillion = obj.Value > 0 ? @obj.PointsPerMill.ToString("F2") : "N/A";}@pointsPerMillion</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
         </div>
+
         <input class="text-left" type="submit" value="Submit" />
         <br />
+
         @if (Model.BestTeams != null && Model.BestTeams.Any())
         {
             <br />
@@ -73,7 +85,7 @@
                     <thead class="thead-dark">
                         <tr>
                             <th colspan="5">Drivers</th>
-                            <th>Constructor</th>
+                            <th colspan="2">Constructors</th> <!-- Updated to span 2 columns -->
                             <th>Points</th>
                             <th>Price</th>
                         </tr>
@@ -82,27 +94,36 @@
                         @foreach (var team in Model.BestTeams)
                         {
                             <tr>
-                                @foreach (var driver in team.Drivers.Where(a => !a.ApiModel.is_constructor))
+                                @foreach (var driver in team.Drivers.Where(a => !a.ApiModel.IsConstructor()))
                                 {
-                                    <td width="20%">
-                                        @{string txt = $"{driver.ApiModel.last_name}[{driver.Points}]";}
+                                    <td width="15%">
+                                        @{
+                                            string txt = $"{driver.ApiModel.LastName}[{driver.Points}]";
+                                        }
                                         <text>@txt</text>
-                                        @if(driver.IsTurboed)
+                                        @if (driver.IsTurboed)
                                         {
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightning" viewBox="0 0 16 16">
-                                            <path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641l2.5-8.5zM6.374 1 4.168 8.5H7.5a.5.5 0 0 1 .478.647L6.78 13.04 11.478 7H8a.5.5 0 0 1-.474-.658L9.306 1H6.374z" />
-                                        </svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightning" viewBox="0 0 16 16">
+                                                <span class="turbo-icon">⚡</span>
+                                            </svg>
                                         }
                                         <text>&nbsp;</text>
                                     </td>
                                 }
-                                <td width="20%">
-                                    @team.Constructor.ApiModel.team_abbreviation [@team.Constructor.Points]
+                                <td colspan="2">
+                                    <!-- Updated to span 2 columns -->
+                                    @foreach (var constructor in team.Constructors)
+                                    {
+                                        <div>
+                                            <text>@constructor.ApiModel.FullName [@constructor.Points]</text>
+                                            <text>&nbsp;&nbsp;</text>
+                                        </div>
+                                    }
                                 </td>
-                                <td width="20%">
+                                <td>
                                     @team.Points
                                 </td>
-                                <td width="20%">
+                                <td>
                                     @team.Price.ToString("F1")
                                 </td>
                             </tr>
@@ -119,25 +140,101 @@
 <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
 <script type="text/javascript">
-    $(function () {
-        var fixHelperModified = function (e, tr) {
-            var $originals = tr.children();
-            var $helper = tr.clone();
-            $helper.children().each(function (index) {
-                $(this).width($originals.eq(index).width())
-            });
-            return $helper;
-        };
+        $(function () {
+            var fixHelperModified = function (e, tr) {
+                var $originals = tr.children();
+                var $helper = tr.clone();
+                $helper.children().each(function (index) {
+                    $(this).width($originals.eq(index).width())
+                });
+                return $helper;
+            };
 
-        $("#sortable").sortable({
-            helper: fixHelperModified,
-            cancel: ".ui-state-disabled",
-            items: "tr:not(.ui-state-disabled)"
-        }).disableSelection();
+            var updatePositions = function (selector) {
+                $(selector).each(function (index) {
+                    $(this).children('.position').html(index + 1);
+                });
+            };
 
-        $(".pos").addClass("ui-state-disabled");
+            // Initialize sortable and update positions for the race results table
+            $("#sortable").sortable({
+                helper: fixHelperModified,
+                cancel: ".ui-state-disabled",
+                items: "tr:not(.ui-state-disabled)",
+                update: function (event, ui) {
+                    updatePositions("#sortable .list-item");
+                }
+            }).disableSelection();
 
-        //$('#sortable').sortable();
-    });
+            // Initialize sortable and update positions for the qualifying results table
+            $("#sortable-qualifying").sortable({
+                helper: fixHelperModified,
+                cancel: ".ui-state-disabled",
+                items: "tr:not(.ui-state-disabled)",
+                update: function (event, ui) {
+                    updatePositions("#sortable-qualifying .list-item");
+                }
+            }).disableSelection();
+
+            // Initial position numbers
+            updatePositions("#sortable .list-item");
+            updatePositions("#sortable-qualifying .list-item");
+        });
 </script>
 }
+<style>
+    .table {
+        width: 100%; /* Full width of the container */
+        table-layout: auto; /* Adjust to 'auto' for automatic column sizing */
+    }
+
+        .table th, .table td {
+            white-space: nowrap; /* Prevent wrapping */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Add ellipsis for overflowed content */
+            padding: 8px; /* Adjust padding as needed */
+        }
+
+            /* Specific column width adjustments */
+            .table th.position, .table td.position { /* Smaller width for Position column */
+                width: 10%;
+                max-width: 10%; /* Or set a fixed width if preferred */
+                min-width: 30px; /* Minimum width */
+            }
+
+            .table th:nth-child(2), .table td:nth-child(2) { /* Larger width for Name column */
+                width: 25%;
+                max-width: 25%; /* Or set a fixed width if preferred */
+                min-width: 100px; /* Minimum width */
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3) { /* Adjust width for Team column */
+                width: 20%;
+                max-width: 20%; /* Or set a fixed width if preferred */
+                min-width: 80px; /* Minimum width */
+            }
+
+            .table th:nth-child(4), .table td:nth-child(4), /* Width for OverallPoints column */
+            .table th:nth-child(5), .table td:nth-child(5), /* Width for Value column */
+            .table th:nth-child(6), .table td:nth-child(6) { /* Width for PPM column */
+                width: 15%;
+                max-width: 15%; /* Or set a fixed width if preferred */
+                min-width: 50px; /* Minimum width */
+            }
+
+    .table-heading {
+        width: 100%; /* Full width of the container */
+        text-align: center;
+        font-size: 24px; /* Adjust size as needed */
+        margin-bottom: 10px; /* Space below the heading */
+    }
+
+    .tables-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* this makes sure they align to the top */
+        gap: 20px; /* Adjust the space between the tables */
+        margin: 0 auto; /* Center the container */
+    }
+
+</style>

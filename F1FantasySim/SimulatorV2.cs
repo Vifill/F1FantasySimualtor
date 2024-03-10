@@ -1,150 +1,198 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using F1FantasySim.Models;
+using F1FantasySim.Models.NewAPI;
+using F1FantasySim.Models.OldAPI;
 
 namespace F1FantasySim
 {
     public class SimulatorV2
     {
-        public List<ApiModel> RaceResult;
+        public List<PlayerApiModel> RaceResult;
+        public List<PlayerApiModel> QualiResult;
 
         private readonly List<int> QualiPoints = new List<int>() { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
         private readonly List<int> RacePoints = new List<int>() { 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 };
 
-        private readonly int QualiBeatTeammatePoints = 2;
-        private readonly int RaceBeatTeammatePoints = 3;
+        private static Dictionary<PlayerApiModel, PointsBreakdown> AllPlayerPoints;
 
-        private readonly int DriverStreaks = 5;
-        private readonly int ConstructorStreaks = 3;
-        private readonly int QualiStreakPoints = 5;
-        private readonly int RaceStreakPoints = 10;
-        private readonly List<ApiModel> AllConstructors;
-
-
-        private static Dictionary<ApiModel, int> AllPlayerPoints;
-
-        public SimulatorV2(List<ApiModel> raceResult, List<ApiModel> Constructors)
+        public SimulatorV2(List<PlayerApiModel> raceResult, List<PlayerApiModel> qualiResult)
         {
             RaceResult = raceResult;
-            AllConstructors = Constructors;
-            AllPlayerPoints = null;
+            QualiResult = qualiResult;
+            AllPlayerPoints = new Dictionary<PlayerApiModel, PointsBreakdown>();
         }
 
-        public List<CompetitorViewModel> CalculatePoints(List<ApiModel> team)
+        public List<CompetitorViewModel> CalculatePoints(List<PlayerApiModel> team)
         {
-            if (AllPlayerPoints == null || AllPlayerPoints.Count == 0)
+            if (AllPlayerPoints.Count == 0)
             {
                 AllPlayerPoints = CalculatePoints();
             }
+            // Filter out the constructors from the team
+            var constructors = team.Where(a => a.IsConstructor()).ToList();
 
-            var constructor = team.Single(a => a.is_constructor);
+            // Calculate points for drivers
+            var playerPoints = AllPlayerPoints
+                .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId && !a.Key.IsConstructor()))
+                .Select(a => new CompetitorViewModel(a.Key, a.Value, false))
+                .OrderByDescending(a => a.Points.TotalPoints)
+                .ToList();
 
-            var teamPoints = AllPlayerPoints.Where(a => team.Select(b => b.id).Contains(a.Key.id)).Select(a => new CompetitorViewModel(a.Key, a.Value, false)).OrderByDescending(a => a.Points).ToList();
+            // Calculate points for each constructor and add to the list
+            var constructorPoints = CalculateConstructorPoints(constructors, AllPlayerPoints);
+            playerPoints.AddRange(constructorPoints);
 
-            var constructorViewModel = new CompetitorViewModel(constructor,
-                AllPlayerPoints.Where(a => a.Key.team_id == constructor.team_id).Sum(a => a.Value), false);
-
-            //Set turbo driver
-            var turboDriver = teamPoints.First(a => !a.ApiModel.is_constructor && a.ApiModel.price < 20);
-            turboDriver.IsTurboed = true;
-            turboDriver.Points *= 2;
-
-            return teamPoints;
-        }
-
-        private Dictionary<ApiModel, int> CalculatePoints()
-        {
-            Dictionary<ApiModel, int> appPlayerPoints = new Dictionary<ApiModel, int>();
-            foreach (var driver in RaceResult.Where(a => !a.is_constructor))
+            // Set turbo driver (assuming the first non-constructor is always chosen, this logic might need adjusting)
+            var turboDriver = playerPoints.FirstOrDefault(a => !a.ApiModel.IsConstructor());
+            if (turboDriver != null)
             {
-                //give 1 point for finishing the race
-                appPlayerPoints.Add(driver, 1);
+                turboDriver.Points.IsTurboed = true;
+                turboDriver.IsTurboed = true;
             }
 
-            CalculateQualifying(appPlayerPoints);
-            CalculateRace(appPlayerPoints);
-            CalculateDriverStreak(appPlayerPoints);
+            return playerPoints;
+        }
 
+        private Dictionary<PlayerApiModel, PointsBreakdown> CalculatePoints()
+        {
+            var allPlayerPoints = RaceResult
+                .Where(a => !a.IsConstructor())
+                .ToDictionary(driver => driver, driver => new PointsBreakdown());
 
-            foreach(var constructor in AllConstructors)
+            CalculateQualifying(allPlayerPoints);
+            CalculateRace(allPlayerPoints);
+
+            // Add constructors to allPlayerPoints with empty PointsBreakdown initially
+            foreach (var constructor in QualiResult.Concat(RaceResult).Where(a => a.IsConstructor()).Distinct())
             {
-                appPlayerPoints.Add(constructor, 0);
-                CalculateConstructorStreak(appPlayerPoints, constructor, QualiStreakPoints);
-                CalculateConstructorStreak(appPlayerPoints, constructor, RaceStreakPoints);
+                allPlayerPoints.Add(constructor, new PointsBreakdown());
             }
 
-            return appPlayerPoints;
+            // Now calculate points for constructors based on their drivers' points
+            var constructors = allPlayerPoints.Keys.Where(player => player.IsConstructor()).ToList();
+            CalculateConstructorQualifyingPoints(constructors, allPlayerPoints);
+
+            return allPlayerPoints;
         }
 
-        private void CalculateDriverStreak(Dictionary<ApiModel, int> drivers)
+        private void CalculateQualifying(Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
         {
-            //Driver Qualifying streak
-            CalculateDriverStreak(drivers, DriverStreaks, QualiStreakPoints);
-            //Driver Race streak
-            CalculateDriverStreak(drivers, DriverStreaks, RaceStreakPoints);
+            // Calculate qualifying points for drivers
+            CalculatePositionPoints(allDriverPoints, QualiPoints, (breakdown, points) => breakdown.QualifyingPoints += points);
+
+            // Calculate qualifying points for constructors based on drivers' performance
+            var constructors = allDriverPoints.Keys.Where(player => player.IsConstructor()).ToList();
+            CalculateConstructorQualifyingPoints(constructors, allDriverPoints);
         }
 
-        private void CalculateDriverStreak(Dictionary<ApiModel, int> drivers, int streakNumber, int pointsForStreak)
+        private void CalculateConstructorQualifyingPoints(List<PlayerApiModel> constructors, Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
         {
-            foreach (var key in drivers.Keys)
+            foreach (var constructor in constructors)
             {
-                int position = RaceResult.IndexOf(key);
+                var constructorDrivers = allDriverPoints.Keys.Where(driver => driver.TeamId == constructor.TeamId).ToList();
 
-                if (int.TryParse(key.streak_events_progress.top_ten_in_a_row_race_progress, out int streak))
+                int driversInQ2 = constructorDrivers.Count(driver => QualiResult.IndexOf(driver) < 15); // assuming Q2 is the top 15
+                int driversInQ3 = constructorDrivers.Count(driver => QualiResult.IndexOf(driver) < 10); // assuming Q3 is the top 10
+
+                var constructorPoints = allDriverPoints[constructor];
+
+                // Apply rules based on the number of drivers in Q2 and Q3
+                if (driversInQ2 == 0)
                 {
-                    if (position < 10 && streak == streakNumber - 1)
+                    constructorPoints.QualifyingPoints -= 1;
+                }
+                else if (driversInQ2 == 1)
+                {
+                    constructorPoints.QualifyingPoints += 1;
+                }
+                else if (driversInQ2 == 2)
+                {
+                    constructorPoints.QualifyingPoints += 3;
+                }
+
+                if (driversInQ3 == 1)
+                {
+                    constructorPoints.QualifyingPoints += 5;
+                }
+                else if (driversInQ3 == 2)
+                {
+                    constructorPoints.QualifyingPoints += 10;
+                }
+            }
+        }
+
+
+        private void CalculateRace(Dictionary<PlayerApiModel, PointsBreakdown> drivers)
+        {
+            // Calculate standard race points
+            CalculatePositionPoints(drivers, RacePoints, (breakdown, points) => breakdown.RacePoints += points );
+
+            // Calculate additional points for positions gained during the race
+            CalculateGainedPositionPoints(drivers);
+        }
+
+
+        private void CalculateGainedPositionPoints(Dictionary<PlayerApiModel, PointsBreakdown> drivers)
+        {
+            foreach (var driver in RaceResult)
+            {
+                if (!driver.IsConstructor())
+                {
+                    // Find the qualifying position of the driver
+                    int qualiPosition = QualiResult.IndexOf(driver) + 1; // Positions are 1-indexed
+                                                                         // Find the race position of the driver
+                    int racePosition = RaceResult.IndexOf(driver) + 1;
+
+                    // If the driver finished the race higher than their qualifying position, award points
+                    if (racePosition < qualiPosition)
                     {
-                        drivers[key] += pointsForStreak;
+                        int positionsGained = qualiPosition - racePosition;
+                        int gainedPoints = positionsGained * 2; // 2 points per position gained
+                        drivers[driver].OvertakingPoints += gainedPoints; // Add the gained points to the driver's total
                     }
                 }
             }
         }
 
-        private void CalculateConstructorStreak(Dictionary<ApiModel, int> players, ApiModel constructor, int pointsForStreak)
+        private void CalculatePositionPoints(
+            Dictionary<PlayerApiModel, PointsBreakdown> drivers,
+            List<int> pointsForPosition,
+            Action<PointsBreakdown, int> updatePointsAction)
         {
-            var teamDrivers = players.Where(a => !a.Key.is_constructor && a.Key.team_id == constructor.team_id);
-
-            if (teamDrivers.All(a => RaceResult.IndexOf(a.Key) < 10 && int.Parse(a.Key.streak_events_progress.top_ten_in_a_row_qualifying_progress) >= ConstructorStreaks - 1))
+            foreach (var driver in drivers.Keys)
             {
-                players[constructor] += pointsForStreak;
-            }
-        }
-
-        private void CalculateQualifying(Dictionary<ApiModel, int> drivers)
-        {
-            CalculatePositionPoints(drivers, QualiPoints);
-            CalcualteBeatTeammatePoints(drivers, QualiBeatTeammatePoints);
-        }
-
-        private void CalculateRace(Dictionary<ApiModel, int> drivers)
-        {
-            CalculatePositionPoints(drivers, RacePoints);
-            CalcualteBeatTeammatePoints(drivers, RaceBeatTeammatePoints);
-        }
-
-        private void CalculatePositionPoints(Dictionary<ApiModel, int> drivers, List<int> pointsForPosition)
-        {
-            foreach (var key in drivers.Keys)
-            {
-                int position = RaceResult.IndexOf(key);
-                if (position < 10)
+                int position = RaceResult.IndexOf(driver);
+                if (position >= 0 && position < pointsForPosition.Count)
                 {
-                    drivers[key] += pointsForPosition[position];
+                    // Use the passed lambda expression to update the points
+                    updatePointsAction(drivers[driver], pointsForPosition[position]);
                 }
             }
         }
 
-        private void CalcualteBeatTeammatePoints(Dictionary<ApiModel, int> drivers, int pointsForbeatingTeammate)
-        {
-            foreach (var key in drivers.Keys)
-            {
-                drivers[key] += DidBeatTeammate(key) ? pointsForbeatingTeammate : 0;
-            }
-        }
 
-        private bool DidBeatTeammate(ApiModel driver)
+        private List<CompetitorViewModel> CalculateConstructorPoints(List<PlayerApiModel> constructors, Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
         {
-            var teammate = RaceResult.Single(a => a.id != driver.id && a.team_id == driver.team_id);
-            return RaceResult.IndexOf(driver) < RaceResult.IndexOf(teammate);
+            var constructorPointsList = new List<CompetitorViewModel>();
+
+            foreach (var constructor in constructors)
+            {
+                var constructorPointsBreakdown = new PointsBreakdown();
+
+                // Aggregate points from drivers
+                foreach (var driverPointsKvp in allPlayerPoints)
+                {
+                    if (driverPointsKvp.Key.TeamId == constructor.TeamId)
+                    {
+                        constructorPointsBreakdown.Aggregate(driverPointsKvp.Value);
+                    }
+                }
+
+                constructorPointsList.Add(new CompetitorViewModel(constructor, constructorPointsBreakdown, false));
+            }
+
+            return constructorPointsList;
         }
     }
 }

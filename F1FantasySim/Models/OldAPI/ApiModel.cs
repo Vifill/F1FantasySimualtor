@@ -1,4 +1,4 @@
-﻿namespace F1FantasySim.Models
+﻿namespace F1FantasySim.Models.OldAPI
 {
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
 
@@ -108,5 +108,5 @@
         public object url { get; set; }
     }
 
-    
+
 }
