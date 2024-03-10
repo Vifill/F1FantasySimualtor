@@ -23,6 +23,8 @@ namespace F1FantasySim.Pages
         public List<PlayerApiModel> Drivers { get; set; }
         public List<PlayerApiModel> Constructors { get; set; }
         public List<CalculationTeamModel> BestTeams { get; set; }
+        public List<CompetitorViewModel> DriverPoints{ get; set; }
+        public List<CompetitorViewModel> ConstructorPoints { get; set; }
 
         public double MaxBudget { get; set; } = 103;
 
@@ -92,7 +94,7 @@ namespace F1FantasySim.Pages
             var qualiResult = qualifyingIds.Select(a => Drivers.Single(b => int.Parse(b.PlayerId) == a)).ToList();
 
             Drivers = driverResult;
-            SimulatorV2 simulator = new SimulatorV2(driverResult, qualiResult);
+            SimulatorV2 simulator = new SimulatorV2(driverResult, qualiResult, Constructors);
 
             // Get all driver combinations
             if (CombinationCache == null || CombinationCache.Count == 0)
@@ -122,13 +124,18 @@ namespace F1FantasySim.Pages
                 simulatedTeams.Add(simulatedResult);
             }
 
-            BestTeams = simulatedTeams.OrderByDescending(a => a.Sum(a => a.Points.TotalPoints)).Take(10).Select(team =>
+            BestTeams = simulatedTeams.OrderByDescending(a => a.Sum(a => a.Points.TotalPoints)).Where(a=> !a.Any(a=> a.ApiModel.PlayerId == "121" && a.IsTurboed)).Take(10).Select(team =>
                 new CalculationTeamModel(
                     team, // The entire team as CompetitorViewModels
                     team.Where(b => b.ApiModel.IsConstructor()).ToList(), // The constructors in the team
                     team.Sum(a => a.Points.TotalPoints), // Total points
                     team.Sum(b => b.ApiModel.Value) // Total value
                 )).ToList();
+
+            var allPlayers = simulator.GetAllPlayerPoints();
+
+            DriverPoints = allPlayers.Where(a => !a.ApiModel.IsConstructor()).ToList();
+            ConstructorPoints = allPlayers.Where(a => a.ApiModel.IsConstructor()).ToList();
 
             return Page();
         }

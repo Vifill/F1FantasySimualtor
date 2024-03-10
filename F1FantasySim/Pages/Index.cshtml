@@ -74,58 +74,126 @@
 
         </div>
 
-        <input class="text-left" type="submit" value="Submit" />
+        <input class="text-left btn btn-primary" type="submit" value="Submit" />
         <br />
 
         @if (Model.BestTeams != null && Model.BestTeams.Any())
         {
-            <br />
-            <div class="col-md-10">
-                <table class="d-lg-table table table-light table-bordered">
-                    <thead class="thead-dark">
+            <div>
+                <br />
+                <div class="col-md-10">
+                    <table class="d-lg-table table table-light table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th colspan="5">Drivers</th>
+                                <th colspan="3">Constructors</th>
+                                <th>Points</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var team in Model.BestTeams)
+                            {
+                                <tr>
+                                    @foreach (var driver in team.Drivers.Where(a => !a.ApiModel.IsConstructor()))
+                                    {
+                                        <td width="15%">
+                                            @{
+                                                string tooltip = $"Qualifying: {driver.Points.QualifyingPoints}&lt;br&gt;" +
+                                                $"Race: {driver.Points.RacePoints}&lt;br&gt;" +
+                                                $"Overtaking: {driver.Points.OvertakingPoints}";
+                                                string txt = $"{driver.ApiModel.LastName} [{driver.Points.TotalPoints}]";
+                                            }
+                                            <!-- Here we use data-toggle and data-html to create a tooltip that renders HTML -->
+                                            <span data-toggle="tooltip" data-html="true" title="@Html.Raw(tooltip)">
+                                                @txt
+                                            </span>
+                                            @if (driver.IsTurboed)
+                                            {
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightning" viewBox="0 0 16 16">
+                                                    <span class="turbo-icon">⚡</span>
+                                                </svg>
+                                            }
+                                            <text>&nbsp;</text>
+                                        </td>
+                                    }
+                                    @foreach (var constructor in team.Constructors)
+                                    {
+                                        string constructorTooltip = $"Qualifying: {constructor.Points.QualifyingPoints}&lt;br /&gt;" +
+                                                                    $"Race: {constructor.Points.RacePoints}&lt;br /&gt;" +
+                                                                    $"Overtaking: {constructor.Points.OvertakingPoints}";
+                                        string constructorName = constructor.ApiModel.FullName;
+                                        string constructorPoints = $"[{constructor.Points.TotalPoints}]";
+                                    
+                                        <td>
+                                            <span data-toggle="tooltip" data-html="true" title="@Html.Raw(constructorTooltip)">
+                                                @constructorName @constructorPoints
+                                            </span>
+                                        </td>
+                                    }
+                                    <td>@team.Points</td>
+                                    <td>@team.Price.ToString("F1")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+
+                <!-- New Detailed Points Breakdown Tables -->
+                <h2 class="table-heading">Detailed Points Breakdown</h2>
+
+                <!-- Drivers Breakdown -->
+                <h3 class="subheading">Drivers</h3>
+                <table class="table table-light table-striped">
+                    <thead>
                         <tr>
-                            <th colspan="5">Drivers</th>
-                            <th colspan="2">Constructors</th> <!-- Updated to span 2 columns -->
-                            <th>Points</th>
-                            <th>Price</th>
+                            <th>Driver</th>
+                            <th>Points Breakdown</th>
+                            <th>Total Points</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var team in Model.BestTeams)
+                        @foreach (var driver in Model.DriverPoints)
                         {
                             <tr>
-                                @foreach (var driver in team.Drivers.Where(a => !a.ApiModel.IsConstructor()))
-                                {
-                                    <td width="15%">
-                                        @{
-                                            string txt = $"{driver.ApiModel.LastName}[{driver.Points}]";
-                                        }
-                                        <text>@txt</text>
-                                        @if (driver.IsTurboed)
-                                        {
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightning" viewBox="0 0 16 16">
-                                                <span class="turbo-icon">⚡</span>
-                                            </svg>
-                                        }
-                                        <text>&nbsp;</text>
+                                <td>@driver.ApiModel.DisplayName</td>
+                                    <td>
+                                        <span data-toggle="tooltip" data-html="true"
+                                              title="@($"Qualifying: {driver.Points.QualifyingPoints}<br />Race: {driver.Points.RacePoints}<br />Overtaking: {driver.Points.OvertakingPoints}")">
+                                            @driver.Points.QualifyingPoints
+                                        </span>
                                     </td>
-                                }
-                                <td colspan="2">
-                                    <!-- Updated to span 2 columns -->
-                                    @foreach (var constructor in team.Constructors)
-                                    {
-                                        <div>
-                                            <text>@constructor.ApiModel.FullName [@constructor.Points]</text>
-                                            <text>&nbsp;&nbsp;</text>
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    @team.Points
-                                </td>
-                                <td>
-                                    @team.Price.ToString("F1")
-                                </td>
+                                <td>@driver.Points.TotalPoints</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Constructors Breakdown -->
+                <h3 class="subheading">Constructors</h3>
+                <table class="table table-light table-striped">
+                    <thead>
+                        <tr>
+                            <th>Constructor</th>
+                            <th>Points Breakdown</th>
+                            <th>Total Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var constructor in Model.ConstructorPoints)
+                        {
+                            <tr>
+                                <td>@constructor.ApiModel.DisplayName</td>
+                                    <td>
+                                        <span data-toggle="tooltip" data-html="true"
+                                              title="@($"Qualifying: {constructor.Points.QualifyingPoints}<br />Race: {constructor.Points.RacePoints}<br />Overtaking: {constructor.Points.OvertakingPoints}")">
+                                            @constructor.Points.QualifyingPoints
+                                        </span>
+                                    </td>
+                                <td>@constructor.Points.TotalPoints</td>
                             </tr>
                         }
                     </tbody>
@@ -149,6 +217,16 @@
                 });
                 return $helper;
             };
+
+            $(document).ready(function () {
+                $('[data-toggle="tooltip"]').tooltip();
+            });
+
+
+            $('[data-toggle="tooltip"]').tooltip({
+                html: true, // Allow HTML in the tooltip
+            });
+
 
             var updatePositions = function (selector) {
                 $(selector).each(function (index) {

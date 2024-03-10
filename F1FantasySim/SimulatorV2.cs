@@ -10,17 +10,25 @@ namespace F1FantasySim
     {
         public List<PlayerApiModel> RaceResult;
         public List<PlayerApiModel> QualiResult;
+        public List<PlayerApiModel> Constructors;
 
         private readonly List<int> QualiPoints = new List<int>() { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
         private readonly List<int> RacePoints = new List<int>() { 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 };
 
         private static Dictionary<PlayerApiModel, PointsBreakdown> AllPlayerPoints;
 
-        public SimulatorV2(List<PlayerApiModel> raceResult, List<PlayerApiModel> qualiResult)
+        public SimulatorV2(List<PlayerApiModel> raceResult, List<PlayerApiModel> qualiResult, List<PlayerApiModel> constructors)
         {
             RaceResult = raceResult;
             QualiResult = qualiResult;
+            Constructors = constructors;
             AllPlayerPoints = new Dictionary<PlayerApiModel, PointsBreakdown>();
+        }
+
+        public List<CompetitorViewModel> GetAllPlayerPoints()
+        {
+            var allPoints = CalculatePoints();
+            return allPoints.Select(a => new CompetitorViewModel(a.Key, a.Value, false)).ToList();
         }
 
         public List<CompetitorViewModel> CalculatePoints(List<PlayerApiModel> team)
@@ -29,19 +37,20 @@ namespace F1FantasySim
             {
                 AllPlayerPoints = CalculatePoints();
             }
+
             // Filter out the constructors from the team
             var constructors = team.Where(a => a.IsConstructor()).ToList();
 
             // Calculate points for drivers
             var playerPoints = AllPlayerPoints
-                .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId && !a.Key.IsConstructor()))
+                .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId) && !a.Key.IsConstructor())
                 .Select(a => new CompetitorViewModel(a.Key, a.Value, false))
                 .OrderByDescending(a => a.Points.TotalPoints)
                 .ToList();
 
             // Calculate points for each constructor and add to the list
-            var constructorPoints = CalculateConstructorPoints(constructors, AllPlayerPoints);
-            playerPoints.AddRange(constructorPoints);
+            //var constructorPoints = AllPlayerPoints.Where(a=> a.)
+            //playerPoints.AddRange(constructorPoints);
 
             // Set turbo driver (assuming the first non-constructor is always chosen, this logic might need adjusting)
             var turboDriver = playerPoints.FirstOrDefault(a => !a.ApiModel.IsConstructor());
@@ -64,14 +73,16 @@ namespace F1FantasySim
             CalculateRace(allPlayerPoints);
 
             // Add constructors to allPlayerPoints with empty PointsBreakdown initially
-            foreach (var constructor in QualiResult.Concat(RaceResult).Where(a => a.IsConstructor()).Distinct())
-            {
-                allPlayerPoints.Add(constructor, new PointsBreakdown());
-            }
+            //foreach (var constructor in Constructors)
+            //{
+            //    if(!allPlayerPoints.ContainsKey(constructor))
+            //    {
+            //        allPlayerPoints.Add(constructor, new PointsBreakdown());
+            //    }
+            //}
 
             // Now calculate points for constructors based on their drivers' points
-            var constructors = allPlayerPoints.Keys.Where(player => player.IsConstructor()).ToList();
-            CalculateConstructorQualifyingPoints(constructors, allPlayerPoints);
+            CalculateConstructorPoints(allPlayerPoints);
 
             return allPlayerPoints;
         }
@@ -83,19 +94,19 @@ namespace F1FantasySim
 
             // Calculate qualifying points for constructors based on drivers' performance
             var constructors = allDriverPoints.Keys.Where(player => player.IsConstructor()).ToList();
-            CalculateConstructorQualifyingPoints(constructors, allDriverPoints);
+            //CalculateConstructorQualifyingPoints(allDriverPoints);
         }
 
-        private void CalculateConstructorQualifyingPoints(List<PlayerApiModel> constructors, Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
+        private void CalculateConstructorQualifyingPoints(Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
         {
-            foreach (var constructor in constructors)
+            foreach (var constructor in Constructors)
             {
                 var constructorDrivers = allDriverPoints.Keys.Where(driver => driver.TeamId == constructor.TeamId).ToList();
 
                 int driversInQ2 = constructorDrivers.Count(driver => QualiResult.IndexOf(driver) < 15); // assuming Q2 is the top 15
                 int driversInQ3 = constructorDrivers.Count(driver => QualiResult.IndexOf(driver) < 10); // assuming Q3 is the top 10
 
-                var constructorPoints = allDriverPoints[constructor];
+                var constructorPoints = new PointsBreakdown();
 
                 // Apply rules based on the number of drivers in Q2 and Q3
                 if (driversInQ2 == 0)
@@ -119,6 +130,8 @@ namespace F1FantasySim
                 {
                     constructorPoints.QualifyingPoints += 10;
                 }
+
+                allDriverPoints[constructor] = constructorPoints;
             }
         }
 
@@ -172,14 +185,39 @@ namespace F1FantasySim
         }
 
 
-        private List<CompetitorViewModel> CalculateConstructorPoints(List<PlayerApiModel> constructors, Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
+        private void CalculateConstructorPoints(Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
         {
-            var constructorPointsList = new List<CompetitorViewModel>();
+            CalculateConstructorQualifyingPoints(allPlayerPoints);
+            CalculateConstructorRacePoints(allPlayerPoints);
 
-            foreach (var constructor in constructors)
+            //var constructorPointsList = new List<CompetitorViewModel>();
+
+            //foreach (var constructor in constructors)
+            //{
+            //    var constructorPointsBreakdown = new PointsBreakdown();
+
+            //    // Aggregate points from drivers
+            //    foreach (var driverPointsKvp in allPlayerPoints)
+            //    {
+            //        if (driverPointsKvp.Key.TeamId == constructor.TeamId)
+            //        {
+            //            constructorPointsBreakdown.Aggregate(driverPointsKvp.Value);
+            //        }
+            //    }
+
+            //    constructorPointsList.Add(new CompetitorViewModel(constructor, constructorPointsBreakdown, false));
+            //}
+
+            //return constructorPointsList;
+        }
+
+        private void CalculateConstructorRacePoints(Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
+        {
+            foreach (var constructor in Constructors)
             {
-                var constructorPointsBreakdown = new PointsBreakdown();
+                var constructorPointsBreakdown = allPlayerPoints[constructor];
 
+                //TODO:  This is not right, need to think how constructor points are calculated
                 // Aggregate points from drivers
                 foreach (var driverPointsKvp in allPlayerPoints)
                 {
@@ -188,11 +226,9 @@ namespace F1FantasySim
                         constructorPointsBreakdown.Aggregate(driverPointsKvp.Value);
                     }
                 }
-
-                constructorPointsList.Add(new CompetitorViewModel(constructor, constructorPointsBreakdown, false));
+                //allPlayerPoints[constructor] = 
+                allPlayerPoints.Add(constructor, constructorPointsBreakdown);
             }
-
-            return constructorPointsList;
         }
     }
 }

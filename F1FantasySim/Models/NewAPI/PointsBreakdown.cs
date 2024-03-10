@@ -5,7 +5,7 @@
         public int QualifyingPoints { get; set; }
         public int RacePoints { get; set; }
         public int OvertakingPoints { get; set; }
-        public bool IsTurboed { get; set; }
+        public bool IsTurboed { get; set; } = false;
         public int TotalPoints => (QualifyingPoints + RacePoints + OvertakingPoints) * (IsTurboed ? 2 : 1);
 
         public PointsBreakdown()
