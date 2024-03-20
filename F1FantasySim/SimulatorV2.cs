@@ -8,21 +8,21 @@ namespace F1FantasySim
 {
     public class SimulatorV2
     {
-        public List<PlayerApiModel> RaceResult;
-        public List<PlayerApiModel> QualiResult;
-        public List<PlayerApiModel> Constructors;
+        public List<DriverApiModel> RaceResult;
+        public List<DriverApiModel> QualiResult;
+        public List<DriverApiModel> Constructors;
 
         private readonly List<int> QualiPoints = new List<int>() { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
         private readonly List<int> RacePoints = new List<int>() { 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 };
 
-        private static Dictionary<PlayerApiModel, PointsBreakdown> AllPlayerPoints;
+        private static Dictionary<DriverApiModel, PointsBreakdown> AllPlayerPoints;
 
-        public SimulatorV2(List<PlayerApiModel> raceResult, List<PlayerApiModel> qualiResult, List<PlayerApiModel> constructors)
+        public SimulatorV2(List<DriverApiModel> raceResult, List<DriverApiModel> qualiResult, List<DriverApiModel> constructors)
         {
             RaceResult = raceResult;
             QualiResult = qualiResult;
             Constructors = constructors;
-            AllPlayerPoints = new Dictionary<PlayerApiModel, PointsBreakdown>();
+            AllPlayerPoints = new Dictionary<DriverApiModel, PointsBreakdown>();
         }
 
         public List<CompetitorViewModel> GetAllPlayerPoints()
@@ -31,7 +31,7 @@ namespace F1FantasySim
             return allPoints.Select(a => new CompetitorViewModel(a.Key, a.Value, false)).ToList();
         }
 
-        public List<CompetitorViewModel> CalculatePoints(List<PlayerApiModel> team)
+        public List<CompetitorViewModel> CalculatePoints(List<DriverApiModel> team)
         {
             if (AllPlayerPoints.Count == 0)
             {
@@ -63,7 +63,7 @@ namespace F1FantasySim
             return playerPoints;
         }
 
-        private Dictionary<PlayerApiModel, PointsBreakdown> CalculatePoints()
+        private Dictionary<DriverApiModel, PointsBreakdown> CalculatePoints()
         {
             var allPlayerPoints = RaceResult
                 .Where(a => !a.IsConstructor())
@@ -87,7 +87,7 @@ namespace F1FantasySim
             return allPlayerPoints;
         }
 
-        private void CalculateQualifying(Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
+        private void CalculateQualifying(Dictionary<DriverApiModel, PointsBreakdown> allDriverPoints)
         {
             // Calculate qualifying points for drivers
             CalculatePositionPoints(allDriverPoints, QualiPoints, (breakdown, points) => breakdown.QualifyingPoints += points);
@@ -97,7 +97,7 @@ namespace F1FantasySim
             //CalculateConstructorQualifyingPoints(allDriverPoints);
         }
 
-        private void CalculateConstructorQualifyingPoints(Dictionary<PlayerApiModel, PointsBreakdown> allDriverPoints)
+        private void CalculateConstructorQualifyingPoints(Dictionary<DriverApiModel, PointsBreakdown> allDriverPoints)
         {
             foreach (var constructor in Constructors)
             {
@@ -136,7 +136,7 @@ namespace F1FantasySim
         }
 
 
-        private void CalculateRace(Dictionary<PlayerApiModel, PointsBreakdown> drivers)
+        private void CalculateRace(Dictionary<DriverApiModel, PointsBreakdown> drivers)
         {
             // Calculate standard race points
             CalculatePositionPoints(drivers, RacePoints, (breakdown, points) => breakdown.RacePoints += points );
@@ -146,7 +146,7 @@ namespace F1FantasySim
         }
 
 
-        private void CalculateGainedPositionPoints(Dictionary<PlayerApiModel, PointsBreakdown> drivers)
+        private void CalculateGainedPositionPoints(Dictionary<DriverApiModel, PointsBreakdown> drivers)
         {
             foreach (var driver in RaceResult)
             {
@@ -169,7 +169,7 @@ namespace F1FantasySim
         }
 
         private void CalculatePositionPoints(
-            Dictionary<PlayerApiModel, PointsBreakdown> drivers,
+            Dictionary<DriverApiModel, PointsBreakdown> drivers,
             List<int> pointsForPosition,
             Action<PointsBreakdown, int> updatePointsAction)
         {
@@ -185,7 +185,7 @@ namespace F1FantasySim
         }
 
 
-        private void CalculateConstructorPoints(Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
+        private void CalculateConstructorPoints(Dictionary<DriverApiModel, PointsBreakdown> allPlayerPoints)
         {
             CalculateConstructorQualifyingPoints(allPlayerPoints);
             CalculateConstructorRacePoints(allPlayerPoints);
@@ -211,7 +211,7 @@ namespace F1FantasySim
             //return constructorPointsList;
         }
 
-        private void CalculateConstructorRacePoints(Dictionary<PlayerApiModel, PointsBreakdown> allPlayerPoints)
+        private void CalculateConstructorRacePoints(Dictionary<DriverApiModel, PointsBreakdown> allPlayerPoints)
         {
             foreach (var constructor in Constructors)
             {

@@ -2,7 +2,7 @@
 
 namespace F1FantasySim.Models.NewAPI
 {
-	public class PlayerApiModel
+	public class DriverApiModel
 	{
 		public string PlayerId { get; set; }
 		public int Skill { get; set; }

@@ -15,20 +15,18 @@ namespace F1FantasySim.Pages
     {
         private readonly ILogger<IndexModel> _logger;
 
-        private readonly string ScheduleURL = "https://fantasy.formula1.com/feeds/schedule/raceday_en.json";
-
 		private readonly string DriverURL = "https://fantasy.formula1.com/feeds/drivers/";
 
         //public IEnumerable<PlayerApiModel>
-        public List<PlayerApiModel> Drivers { get; set; }
-        public List<PlayerApiModel> Constructors { get; set; }
+        public List<DriverApiModel> Drivers { get; set; }
+        public List<DriverApiModel> Constructors { get; set; }
         public List<CalculationTeamModel> BestTeams { get; set; }
         public List<CompetitorViewModel> DriverPoints{ get; set; }
         public List<CompetitorViewModel> ConstructorPoints { get; set; }
 
         public double MaxBudget { get; set; } = 103;
 
-        private static Combinations<PlayerApiModel> CombinationCache;
+        private static Combinations<DriverApiModel> CombinationCache;
 
         public IndexModel(ILogger<IndexModel> logger)
         {
@@ -46,7 +44,8 @@ namespace F1FantasySim.Pages
 			httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
 
 			// Get the ID of the upcoming race.
-			var upcomingRaceId = await GetUpcomingRace(httpClient);
+            Utils utils = new Utils();
+			var upcomingRaceId = await utils.GetUpcomingRace(httpClient);
 
 			// Construct the URL dynamically using the upcomingRaceId.
 			string dynamicUrl = $"{DriverURL}{upcomingRaceId}_en.json";
@@ -57,7 +56,7 @@ namespace F1FantasySim.Pages
 			{
 				string content = await response.Content.ReadAsStringAsync();
 
-                var playersAndConstructors = JObject.Parse(content)["Data"]["Value"].ToObject<List<PlayerApiModel>>();
+                var playersAndConstructors = JObject.Parse(content)["Data"]["Value"].ToObject<List<DriverApiModel>>();
                 Drivers = playersAndConstructors.Where(a => a.PositionName.Equals("DRIVER", StringComparison.InvariantCultureIgnoreCase)).OrderByDescending(a=> double.Parse(a.OverallPpints)).Where(a=> a.PlayerId != "11031").ToList();
                 Drivers.ForEach(a => a.PointsPerMillion(upcomingRaceId - 1));
                 Constructors = playersAndConstructors.Where(a => a.PositionName.Equals("CONSTRUCTOR", StringComparison.InvariantCultureIgnoreCase)).ToList();
@@ -69,22 +68,7 @@ namespace F1FantasySim.Pages
 			}
 		}
 
-		private async Task<int> GetUpcomingRace(HttpClient httpClient)
-		{
-			var response = await httpClient.GetAsync(ScheduleURL); // Assume ScheduleURL is a valid URL defined elsewhere
-			if (response.IsSuccessStatusCode)
-			{
-				var result = await response.Content.ReadAsStringAsync();
-				var parsed = JObject.Parse(result)["Data"]["Value"];
-				var races = parsed.ToObject<List<RaceInfo>>();
-				return races.FirstOrDefault(a => a.GDStatus == 1).GamedayId; // Crash if this fails, I want to know
-			}
-			else
-			{
-				Console.WriteLine($"Failed to retrieve race data: {response.StatusCode}");
-                throw new Exception("Failed to retrieve race data");
-			}
-		}
+		
 
 		public async Task<IActionResult> OnPost(int[] ids, int[] qualifyingIds)
         {
@@ -99,12 +83,12 @@ namespace F1FantasySim.Pages
             // Get all driver combinations
             if (CombinationCache == null || CombinationCache.Count == 0)
             {
-                CombinationCache = new Combinations<PlayerApiModel>(Drivers, 5);
+                CombinationCache = new Combinations<DriverApiModel>(Drivers, 5);
             }
 
             // Create new teams from the driver combination for each pair of constructors
-            List<List<PlayerApiModel>> teamList = new List<List<PlayerApiModel>>();
-            var constructorPairs = new Combinations<PlayerApiModel>(Constructors, 2);
+            List<List<DriverApiModel>> teamList = new List<List<DriverApiModel>>();
+            var constructorPairs = new Combinations<DriverApiModel>(Constructors, 2);
 
             foreach (var driverComb in CombinationCache)
             {
