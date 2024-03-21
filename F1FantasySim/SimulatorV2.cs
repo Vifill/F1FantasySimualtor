@@ -1,8 +1,5 @@
-﻿using System.Diagnostics;
-using System.Linq;
-using F1FantasySim.Models;
+﻿using F1FantasySim.Models;
 using F1FantasySim.Models.NewAPI;
-using F1FantasySim.Models.OldAPI;
 
 namespace F1FantasySim
 {

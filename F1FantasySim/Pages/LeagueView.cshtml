@@ -1,4 +1,125 @@
 ﻿@page
 @model F1FantasySim.Pages.LeagueViewModel
+
 @{
+    ViewData["Title"] = "League View"; // Set the page title if you wish
 }
+
+<h2>League Members</h2>
+<body>
+    <form method="get">
+        <label for="raceId">Select Race ID:</label>
+        <select name="raceId" id="raceId">
+            @foreach (var id in Model.AvailableRaceIds)
+            {
+                if (Model.SelectedRaceId == id)
+                {
+                    <option value="@id" selected>Race @id</option>
+                }
+                else
+                {
+                    <option value="@id">Race @id</option>
+                }
+            }
+        </select>
+        <button type="submit">Refresh</button>
+    </form>
+
+@if (Model.Players != null && Model.Players.Any())
+{
+    <table class="table" data-toggle="table">
+        <thead>
+            <tr>
+                <th data-sortable="true" data-sorter="numericSorter">#</th> <!-- Rank column header -->
+                <th>Name</th>
+                <th>Drivers</th>
+                <th data-sortable="true" data-sorter="numericSorter">Team Balance</th>
+                <th data-sortable="true" data-sorter="numericSorter">Total Points</th>
+                <th data-sortable="true" data-sorter="numericSorter">RW Points</th>
+                <th data-sortable="true" data-sorter="numericSorter">Subs Used</th>
+                <th>Extra DRS</th>
+                <th>Final Fix</th>
+                <th>Wildcard</th>
+                <th>Auto Pilot</th>
+                <th>Limitless</th>
+                <th>No Negative</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int rank = 1; // Initialize rank counter
+            }
+            @foreach (var playerDetail in Model.Players)
+            {
+                foreach (var userTeam in playerDetail.userTeam)
+                {
+                    <tr>
+                        <td>@rank</td> <!-- Display rank -->
+                        <td>@userTeam.teamname</td>
+                        <td>
+                            @{
+                                int playerCount = userTeam.playerid.Count;
+                                for (int i = 0; i < playerCount; i++)
+                                {
+                                    var player = userTeam.playerid[i];
+                                    var lastName = player.DriverDetails?.LastName?.ToUpper() ?? string.Empty;
+                                    var safeLength = Math.Min(3, lastName.Length); // Ensure we don't exceed the string's length
+
+                                    // Insert a line break before the last 2 entries (constructors)
+                                    if (i == playerCount - 2)
+                                    {
+                                        <br /> @* Line break to separate drivers and constructors *@
+                                    }
+
+                                    <span>
+                                        @lastName.Substring(0, safeLength)
+                                        @if (player.iscaptain == 1)
+                                        {
+                                            <i class="fas fa-bolt" title="Captain"></i> @* Lightning icon for captain *@
+                                        }
+                                        @if (player.ismgcaptain == 1)
+                                        {
+                                            <i class="fas fa-radiation" title="Mega Captain"></i> @* Nuke icon for mega captain *@
+                                        }
+                                    </span>
+                                }
+                            }
+                        </td>
+                        <td>@userTeam.team_info?.maxTeambal</td>
+                        <td>@userTeam.ovpoints</td>
+                        <td>@userTeam.gdpoints</td>
+                        <td>@userTeam.usersubs</td>
+                        <td>@(userTeam.extradrstakengd?.ToString() ?? "N/A")</td>
+                        <td>@(userTeam.finalfixtakengd?.ToString() ?? "N/A")</td>
+                        <td>@(userTeam.is_wildcard_taken_gd_id?.ToString() ?? "N/A")</td>
+                        <td>@(userTeam.autopilottakengd?.ToString() ?? "N/A")</td>
+                        <td>@(userTeam.limitlesstakengd?.ToString() ?? "N/A")</td>
+                        <td>@(userTeam.nonigativetakengd?.ToString() ?? "N/A")</td>
+                    </tr>
+                    rank++; // Increment rank for the next team/member
+                }
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No league members found.</p>
+}
+</body>
+
+<script>
+    function numericSorter(a, b) {
+        a = parseFloat(a);
+        b = parseFloat(b);
+
+        if (isNaN(a)) {
+            a = 0; // or a large negative number to ensure it sorts to the bottom
+        }
+        if (isNaN(b)) {
+            b = 0; // or a large negative number to ensure it sorts to the bottom
+        }
+
+        return a - b;
+    }
+</script>
