@@ -38,16 +38,13 @@ namespace F1FantasySim
             // Filter out the constructors from the team
             var constructors = team.Where(a => a.IsConstructor()).ToList();
 
-            // Calculate points for drivers
+            // Create a deep copy of AllPlayerPoints for drivers in the team and not constructors
             var playerPoints = AllPlayerPoints
-                .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId) && !a.Key.IsConstructor())
+                .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId))
+                .ToDictionary(a => a.Key, a => new PointsBreakdown(a.Value)) // Assuming PointsBreakdown has a copy constructor
                 .Select(a => new CompetitorViewModel(a.Key, a.Value, false))
                 .OrderByDescending(a => a.Points.TotalPoints)
                 .ToList();
-
-            // Calculate points for each constructor and add to the list
-            //var constructorPoints = AllPlayerPoints.Where(a=> a.)
-            //playerPoints.AddRange(constructorPoints);
 
             // Set turbo driver (assuming the first non-constructor is always chosen, this logic might need adjusting)
             var turboDriver = playerPoints.FirstOrDefault(a => !a.ApiModel.IsConstructor());
@@ -60,6 +57,14 @@ namespace F1FantasySim
             return playerPoints;
         }
 
+        // Calculate points for drivers
+        //var playerPoints = AllPlayerPoints.
+
+        //    .Where(a => team.Any(b => b.PlayerId == a.Key.PlayerId) && !a.Key.IsConstructor())
+        //    .Select(a => new CompetitorViewModel(a.Key, a.Value, false))
+        //    .OrderByDescending(a => a.Points.TotalPoints)
+        //    .ToList();
+
         private Dictionary<DriverApiModel, PointsBreakdown> CalculatePoints()
         {
             var allPlayerPoints = RaceResult
@@ -68,15 +73,6 @@ namespace F1FantasySim
 
             CalculateQualifying(allPlayerPoints);
             CalculateRace(allPlayerPoints);
-
-            // Add constructors to allPlayerPoints with empty PointsBreakdown initially
-            //foreach (var constructor in Constructors)
-            //{
-            //    if(!allPlayerPoints.ContainsKey(constructor))
-            //    {
-            //        allPlayerPoints.Add(constructor, new PointsBreakdown());
-            //    }
-            //}
 
             // Now calculate points for constructors based on their drivers' points
             CalculateConstructorPoints(allPlayerPoints);
@@ -91,7 +87,6 @@ namespace F1FantasySim
 
             // Calculate qualifying points for constructors based on drivers' performance
             var constructors = allDriverPoints.Keys.Where(player => player.IsConstructor()).ToList();
-            //CalculateConstructorQualifyingPoints(allDriverPoints);
         }
 
         private void CalculateConstructorQualifyingPoints(Dictionary<DriverApiModel, PointsBreakdown> allDriverPoints)
@@ -186,46 +181,26 @@ namespace F1FantasySim
         {
             CalculateConstructorQualifyingPoints(allPlayerPoints);
             CalculateConstructorRacePoints(allPlayerPoints);
-
-            //var constructorPointsList = new List<CompetitorViewModel>();
-
-            //foreach (var constructor in constructors)
-            //{
-            //    var constructorPointsBreakdown = new PointsBreakdown();
-
-            //    // Aggregate points from drivers
-            //    foreach (var driverPointsKvp in allPlayerPoints)
-            //    {
-            //        if (driverPointsKvp.Key.TeamId == constructor.TeamId)
-            //        {
-            //            constructorPointsBreakdown.Aggregate(driverPointsKvp.Value);
-            //        }
-            //    }
-
-            //    constructorPointsList.Add(new CompetitorViewModel(constructor, constructorPointsBreakdown, false));
-            //}
-
-            //return constructorPointsList;
         }
 
         private void CalculateConstructorRacePoints(Dictionary<DriverApiModel, PointsBreakdown> allPlayerPoints)
         {
             foreach (var constructor in Constructors)
             {
-                var constructorPointsBreakdown = allPlayerPoints[constructor];
-
-                //TODO:  This is not right, need to think how constructor points are calculated
-                // Aggregate points from drivers
-                foreach (var driverPointsKvp in allPlayerPoints)
+                // Check if the constructor already has a PointsBreakdown in allPlayerPoints, if not, create a new one
+                if (!allPlayerPoints.TryGetValue(constructor, out var constructorPointsBreakdown))
                 {
-                    if (driverPointsKvp.Key.TeamId == constructor.TeamId)
-                    {
-                        constructorPointsBreakdown.Aggregate(driverPointsKvp.Value);
-                    }
+                    constructorPointsBreakdown = new PointsBreakdown();
+                    allPlayerPoints.Add(constructor, constructorPointsBreakdown);
                 }
-                //allPlayerPoints[constructor] = 
-                allPlayerPoints.Add(constructor, constructorPointsBreakdown);
+
+                // Aggregate points from drivers
+                foreach (var driver in allPlayerPoints.Keys.Where(k => !k.IsConstructor() && k.TeamId == constructor.TeamId))
+                {
+                    constructorPointsBreakdown.Aggregate(allPlayerPoints[driver]);
+                }
             }
         }
+
     }
 }

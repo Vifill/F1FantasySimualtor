@@ -12,7 +12,6 @@
         {
         }
 
-        // Constructor
         public PointsBreakdown(int qualifyingPoints, int racePoints)
         {
             QualifyingPoints = qualifyingPoints;
@@ -20,11 +19,27 @@
             OvertakingPoints = 0;
         }
 
+        // Copy constructor
+        public PointsBreakdown(PointsBreakdown other)
+        {
+            if (other != null)
+            {
+                QualifyingPoints = other.QualifyingPoints;
+                RacePoints = other.RacePoints;
+                OvertakingPoints = other.OvertakingPoints;
+                IsTurboed = other.IsTurboed;
+            }
+        }
+
         public void Aggregate(PointsBreakdown other)
         {
-            QualifyingPoints += other.QualifyingPoints;
-            RacePoints += other.RacePoints;
-            OvertakingPoints += other.OvertakingPoints;
+            if (other != null)
+            {
+                QualifyingPoints += other.QualifyingPoints;
+                RacePoints += other.RacePoints;
+                OvertakingPoints += other.OvertakingPoints;
+                // Note: IsTurboed is not aggregated because it's a property that should be explicitly set
+            }
         }
     }
 }

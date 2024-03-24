@@ -1,14 +1,8 @@
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json.Nodes;
 using F1FantasySim.Models.NewAPI;
 using F1FantasySim.Models.NewAPI.LeagueView;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Newtonsoft.Json.Linq;
-using static System.Net.WebRequestMethods;
+using System.Net;
 
 namespace F1FantasySim.Pages
 {
