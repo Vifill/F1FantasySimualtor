@@ -5,13 +5,15 @@
 }
 <body>
     <form method="post">
-        <label>Max Budget</label>
-        <input asp-for="MaxBudget" /><br /><br />
+        <div class="budget-container">
+            <label>Max Budget</label>
+            <input asp-for="MaxBudget" /><br /><br />
+        </div>
 
-        <div class="tables-container" style="display: flex; justify-content: space-around;">
+        <div class="tables-container row justify-content-center" @* style="display: flex; justify-content: space-around;" *@>
             
             <!-- Qualifying Results Table -->
-            <div class="col-md-3">
+            <div class="col-md-5 mx-auto">
                 <h2 class="table-heading" style="text-align: center;">Qualifying</h2> <!-- This is the new heading for Qualifying -->
                 <table class="table table-light table-striped table-hover">
                     <thead>
@@ -29,11 +31,11 @@
                         {
                             <tr class="list-item" id="q-@obj.PlayerId">
                                 <td class="position"></td> <!-- Placeholder for position value -->
-                                <td width="50%">@obj.DisplayName<input type="hidden" name="qualifyingIds" value="@obj.PlayerId"></td>
-                                <td width="20%">@obj.TeamName</td>
-                                <td width="20%">@obj.OverallPpints</td>
-                                <td width="20%">@obj.Value</td>
-                                <td width="20%">@{
+                                <td class="w-40">@obj.DisplayName<input type="hidden" name="qualifyingIds" value="@obj.PlayerId"></td>
+                                <td class="w-30">@obj.TeamName</td>
+                                <td class="w-10">@obj.OverallPpints</td>
+                                <td class="w-10">@obj.Value</td>
+                                <td class="w-10">@{
                                         var pointsPerMillion = obj.Value > 0 ? @obj.PointsPerMill.ToString("F2") : "N/A";
                                     }@pointsPerMillion</td>
                             </tr>
@@ -43,7 +45,7 @@
             </div>
 
             <!-- Race Results Table (Existing Table) -->
-            <div class="col-md-3">
+            <div class="col-md-5 mx-auto">
                 <h2 class="table-heading" style="text-align: center;">Race</h2> <!-- This is the new heading for Race -->
                 <table class="table table-light table-striped table-hover">
                     <thead>
@@ -61,11 +63,11 @@
                         {
                             <tr class="list-item" id="@obj.PlayerId">
                                 <td class="position"></td> <!-- Placeholder for position value -->
-                                <td width="50%">@obj.DisplayName<input type="hidden" name="ids" value="@obj.PlayerId"></td>
-                                <td width="20%">@obj.TeamName</td>
-                                <td width="20%">@obj.OverallPpints</td>
-                                <td width="20%">@obj.Value</td>
-                                <td width="20%">@{var pointsPerMillion = obj.Value > 0 ? @obj.PointsPerMill.ToString("F2") : "N/A";}@pointsPerMillion</td>
+                                <td class="w-40">@obj.DisplayName<input type="hidden" name="ids" value="@obj.PlayerId"></td>
+                                <td class="w-30">@obj.TeamName</td>
+                                <td class="w-10">@obj.OverallPpints</td>
+                                <td class="w-10">@obj.Value</td>
+                                <td class="w-10">@{var pointsPerMillion = obj.Value > 0 ? @obj.PointsPerMill.ToString("F2") : "N/A";}@pointsPerMillion</td>
                             </tr>
                         }
                     </tbody>
@@ -74,7 +76,7 @@
 
         </div>
 
-        <input class="text-left btn btn-primary" type="submit" value="Submit" />
+        <input class="text-left btn btn-primary submit-button" type="submit" value="Submit" />
         <br />
 
         @if (Model.BestTeams != null && Model.BestTeams.Any())
@@ -313,6 +315,37 @@
         align-items: flex-start; /* this makes sure they align to the top */
         gap: 20px; /* Adjust the space between the tables */
         margin: 0 auto; /* Center the container */
+        padding: 0; /* Reset padding */
+    }
+
+    .tables-container > div {
+        margin: 0; /* Reset margin */
+    }
+
+    .budget-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .submit-button {
+        margin-bottom: 70px;
+        padding: 15px 30px; /* Increase padding to make the button bigger */
+        display: block; /* Make the button a block element so it can be centered */
+        margin-left: auto; /* Center the button */
+        margin-right: auto;
+    }
+
+    @@media (max-width: 992px) {
+        .tables-container > div {
+            padding: 0 15px; /* Add 15px padding to the left and right */
+            max-width: none; /* Remove the max-width */
+        }
+    }
+
+    .table {
+        table-layout: fixed;
     }
 
 </style>
