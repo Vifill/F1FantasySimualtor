@@ -10,26 +10,27 @@
             <input asp-for="MaxBudget" /><br /><br />
         </div>
 
-        <div class="tables-container row justify-content-center" @* style="display: flex; justify-content: space-around;" *@>
             
+        <div class="tables-container row justify-content-center" @* style="display: flex; justify-content: space-around;" *@>
             <!-- Qualifying Results Table -->
             <div class="col-md-5 mx-auto">
+            <button id="copyOrderToQualifying" style="float: right" type="button">Copy from Race ← </button>
                 <h2 class="table-heading" style="text-align: center;">Qualifying</h2> <!-- This is the new heading for Qualifying -->
                 <table class="table table-light table-striped table-hover">
                     <thead>
                         <tr>
                             <th>Position</th> <!-- New Position Column -->
-                            <th>Name</th>
-                            <th>Team</th>
-                            <th>OverallPoints</th>
-                            <th>Value</th>
-                            <th>PPM</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Name</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Team</th>
+                            <th data-sortable="true" data-sorter="numericSorter">OverallPoints</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Value</th>
+                            <th data-sortable="true" data-sorter="numericSorter">PPM</th>
                         </tr>
                     </thead>
                     <tbody id="sortable-qualifying">
                         @foreach (var obj in Model.Drivers)
                         {
-                            <tr class="list-item" id="q-@obj.PlayerId">
+                            <tr class="list-item" id="@obj.PlayerId">
                                 <td class="position"></td> <!-- Placeholder for position value -->
                                 <td class="w-40">@obj.DisplayName<input type="hidden" name="qualifyingIds" value="@obj.PlayerId"></td>
                                 <td class="w-30">@obj.TeamName</td>
@@ -46,16 +47,17 @@
 
             <!-- Race Results Table (Existing Table) -->
             <div class="col-md-5 mx-auto">
+                <button id="copyOrderToRace" style="display: inline-block; width: auto;" type="button">→ Copy from Qualifying</button>
                 <h2 class="table-heading" style="text-align: center;">Race</h2> <!-- This is the new heading for Race -->
                 <table class="table table-light table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>Position</th> <!-- New Position Column -->
-                            <th>Name</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Position</th> <!-- New Position Column -->
+                            <th data-sortable="true" data-sorter="numericSorter">Name</th>
                             <th>Team</th>
-                            <th>OverallPoints</th>
-                            <th>Value</th>
-                            <th>PPM</th>
+                            <th data-sortable="true" data-sorter="numericSorter">OverallPoints</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Value</th>
+                            <th data-sortable="true" data-sorter="numericSorter">PPM</th>
                         </tr>
                     </thead>
                     <tbody id="sortable">
@@ -149,12 +151,12 @@
 
                 <!-- Drivers Breakdown -->
                 <h3 class="subheading">Drivers</h3>
-                <table class="table table-light table-striped">
+                <table class="table table-light table-striped" data-toggle="table">
                     <thead>
                         <tr>
-                            <th>Driver</th>
-                            <th>Points Breakdown</th>
-                            <th>Total Points</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Driver</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Points Breakdown</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Total Points</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -259,6 +261,97 @@
             // Initial position numbers
             updatePositions("#sortable .list-item");
             updatePositions("#sortable-qualifying .list-item");
+
+            // Function to copy order from one table to another
+            function copyOrder(sourceTableSelector, targetTableSelector) {
+                var orderMap = [];
+
+                $(sourceTableSelector + ' .list-item').each(function () {
+                    var id = this.id; // Using the full ID as the identifier
+                    console.log("Source ID: ", id); // Log each id
+                    orderMap.push(id);
+                });
+
+                console.log("Order to apply: ", orderMap); // Log the complete order array
+
+                orderMap.forEach(function (id) {
+                    console.log("Moving ID: ", id); // Log the id being moved
+                    var rowToMove = $(targetTableSelector + ' .list-item#' + id).detach();
+                    if (rowToMove.length) {
+                        console.log("Row found and moved: ", id);
+                    } else {
+                        console.log("Row not found for ID: ", id);
+                    }
+                    $(targetTableSelector).append(rowToMove);
+                });
+            }
+
+            $('#copyOrderToQualifying').click(function () {
+                console.log('Copying order to Qualifying...');
+                copyOrder('#sortable', '#sortable-qualifying');
+            });
+
+            $('#copyOrderToRace').click(function () {
+                console.log('Copying order to Race...');
+                copyOrder('#sortable-qualifying', '#sortable');
+            });
+
+
+            // --- Local Storage Functions ---
+            function saveOrderToLocalStorage(tableSelector, storageKey) {
+                var order = [];
+                $(tableSelector + ' .list-item').each(function () {
+                    order.push(this.id); // Assuming the ID is sufficient to identify the row
+                });
+                localStorage.setItem(storageKey, JSON.stringify(order));
+            }
+
+            // Example usage after updating the order in your sortable table:
+            $("#sortable, #sortable-qualifying").on("sortupdate", function (event, ui) {
+                saveOrderToLocalStorage('#sortable', 'raceOrder');
+                saveOrderToLocalStorage('#sortable-qualifying', 'qualifyingOrder');
+            });
+
+            function applyOrderFromLocalStorage(tableSelector, storageKey) {
+                var order = JSON.parse(localStorage.getItem(storageKey));
+                if (!order) return; // If there's no order saved, do nothing
+
+                order.forEach(function (id) {
+                    var row = $(tableSelector + ' .list-item#' + id).detach();
+                    $(tableSelector).append(row);
+                });
+            }
+
+            // Example usage on page load:
+            function applyOrderWithFallback(tableSelector, storageKey) {
+                var storedOrder = JSON.parse(localStorage.getItem(storageKey));
+                if (!storedOrder) return; // If there's no order saved, do nothing
+
+                // Get current IDs from the table
+                var currentIds = $(tableSelector + ' .list-item').map(function () {
+                    return this.id;
+                }).get();
+
+                // Check for any IDs in the current table that are not in the stored order
+                var isDiscrepancy = currentIds.some(id => !storedOrder.includes(id));
+
+                if (isDiscrepancy) {
+                    console.log("Discrepancy found. Using default order.");
+                    // Optional: Apply a specific default order here if desired
+                    return; // Exit the function without applying the stored order
+                }
+
+                // No discrepancy, apply the stored order
+                storedOrder.forEach(function (id) {
+                    var row = $(tableSelector + ' .list-item#' + id).detach();
+                    $(tableSelector).append(row);
+                });
+            }
+
+            $(document).ready(function () {
+                applyOrderWithFallback('#sortable', 'raceOrder');
+                applyOrderWithFallback('#sortable-qualifying', 'qualifyingOrder');
+            });
         });
 </script>
 }
@@ -346,6 +439,11 @@
 
     .table {
         table-layout: fixed;
+    }
+
+    .copy-button {
+        display: inline-block; /* Make the button an inline-block element */
+        width: auto; /* Let the button size itself to fit its contents */
     }
 
 </style>
