@@ -16,12 +16,12 @@
             <div class="col-md-5 mx-auto">
             <button id="copyOrderToQualifying" style="float: right" type="button">Copy from Race ← </button>
                 <h2 class="table-heading" style="text-align: center;">Qualifying</h2> <!-- This is the new heading for Qualifying -->
-                <table class="table table-light table-striped table-hover">
+                <table class="table table-light table-striped table-hover" data-toggle="table">
                     <thead>
                         <tr>
-                            <th>Position</th> <!-- New Position Column -->
-                            <th data-sortable="true" data-sorter="numericSorter">Name</th>
-                            <th data-sortable="true" data-sorter="numericSorter">Team</th>
+                            <th data-sortable="true" data-sorter="numericSorter">Position</th> <!-- New Position Column -->
+                            <th data-sortable="true">Name</th>
+                            <th data-sortable="true">Team</th>
                             <th data-sortable="true" data-sorter="numericSorter">OverallPoints</th>
                             <th data-sortable="true" data-sorter="numericSorter">Value</th>
                             <th data-sortable="true" data-sorter="numericSorter">PPM</th>
@@ -47,14 +47,14 @@
 
             <!-- Race Results Table (Existing Table) -->
             <div class="col-md-5 mx-auto">
-                <button id="copyOrderToRace" style="display: inline-block; width: auto;" type="button">→ Copy from Qualifying</button>
+                <button id="copyOrderToRace" style="float: left display: inline-block; width: auto;" type="button">→ Copy from Qualifying</button>
                 <h2 class="table-heading" style="text-align: center;">Race</h2> <!-- This is the new heading for Race -->
-                <table class="table table-light table-striped table-hover">
+                <table class="table table-light table-striped table-hover" data-toggle="table">
                     <thead>
                         <tr>
                             <th data-sortable="true" data-sorter="numericSorter">Position</th> <!-- New Position Column -->
-                            <th data-sortable="true" data-sorter="numericSorter">Name</th>
-                            <th>Team</th>
+                            <th data-sortable="true" >Name</th>
+                            <th data-sortable="true">Team</th>
                             <th data-sortable="true" data-sorter="numericSorter">OverallPoints</th>
                             <th data-sortable="true" data-sorter="numericSorter">Value</th>
                             <th data-sortable="true" data-sorter="numericSorter">PPM</th>
@@ -268,23 +268,20 @@
 
                 $(sourceTableSelector + ' .list-item').each(function () {
                     var id = this.id; // Using the full ID as the identifier
-                    console.log("Source ID: ", id); // Log each id
                     orderMap.push(id);
                 });
 
-                console.log("Order to apply: ", orderMap); // Log the complete order array
-
                 orderMap.forEach(function (id) {
-                    console.log("Moving ID: ", id); // Log the id being moved
                     var rowToMove = $(targetTableSelector + ' .list-item#' + id).detach();
-                    if (rowToMove.length) {
-                        console.log("Row found and moved: ", id);
-                    } else {
-                        console.log("Row not found for ID: ", id);
-                    }
                     $(targetTableSelector).append(rowToMove);
                 });
+
+                // Update positions in the target table after copying the order
+                updatePositions(targetTableSelector + ' .list-item');
+                saveOrderToLocalStorage('#sortable', 'raceOrder');
+                saveOrderToLocalStorage('#sortable-qualifying', 'qualifyingOrder');
             }
+
 
             $('#copyOrderToQualifying').click(function () {
                 console.log('Copying order to Qualifying...');
@@ -295,6 +292,7 @@
                 console.log('Copying order to Race...');
                 copyOrder('#sortable-qualifying', '#sortable');
             });
+
 
 
             // --- Local Storage Functions ---
@@ -346,13 +344,64 @@
                     var row = $(tableSelector + ' .list-item#' + id).detach();
                     $(tableSelector).append(row);
                 });
+
+                // Update positions after reordering
+                updatePositions(tableSelector + ' .list-item');
             }
+
+            function updatePositions(selector) {
+                $(selector).each(function (index) {
+                    // Update the text of the first cell (position number) to match the row's current index
+                    $(this).find('td:first').text(index + 1);
+                });
+            }
+
+            function observeTableChanges(tableSelector) {
+                var tableElement = document.querySelector(tableSelector);
+
+                // Create a new MutationObserver instance
+                var observer = new MutationObserver(function (mutations) {
+                    mutations.forEach(function (mutation) {
+                        if (mutation.type === 'childList') {
+                            // Call updatePositions whenever there are changes in the table's children (rows)
+                            updatePositions(tableSelector + ' .list-item');
+                        }
+                    });
+                });
+
+                // Configuration object for the observer
+                var config = { childList: true, subtree: true };
+
+                // Start observing the target table for configured mutations
+                observer.observe(tableElement, config);
+            }
+
+            // Call observeTableChanges for each table you want to observe
+            $(document).ready(function () {
+                observeTableChanges('#sortable');
+                observeTableChanges('#sortable-qualifying');
+            });
 
             $(document).ready(function () {
                 applyOrderWithFallback('#sortable', 'raceOrder');
                 applyOrderWithFallback('#sortable-qualifying', 'qualifyingOrder');
             });
         });
+
+        function numericSorter(a, b) {
+            a = parseFloat(a);
+            b = parseFloat(b);
+
+            if (isNaN(a)) {
+                a = 0; // or a large negative number to ensure it sorts to the bottom
+            }
+            if (isNaN(b)) {
+                b = 0; // or a large negative number to ensure it sorts to the bottom
+            }
+
+            console.log('numeric sorter');
+            return a - b;
+        }
 </script>
 }
 <style>
