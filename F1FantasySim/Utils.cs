@@ -17,7 +17,7 @@ namespace F1FantasySim
                 var result = await response.Content.ReadAsStringAsync();
                 var parsed = JObject.Parse(result)["Data"]["Value"];
                 var races = parsed.ToObject<List<RaceInfo>>();
-                return races.FirstOrDefault(a => a.GDStatus is 1 or 3).GamedayId; // Crash if this fails, I want to know
+                return races.FirstOrDefault(a => a.GDStatus is 1 or 2 or 3).GamedayId; // Crash if this fails, I want to know
             }
             else
             {
