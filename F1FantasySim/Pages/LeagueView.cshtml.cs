@@ -22,6 +22,7 @@ namespace F1FantasySim.Pages
         public List<PlayerDetails> Players { get; private set; }
         public List<int> AvailableRaceIds { get; set; } = new List<int>(); // Assume this gets populated with actual race IDs
         public int SelectedRaceId { get; set; }
+        private static Dictionary<string, PlayerDetails> _playerDetailsCache = new Dictionary<string, PlayerDetails>();
 
         public LeagueViewModel(IOptions<ApiSettings> options)
         {
@@ -54,10 +55,27 @@ namespace F1FantasySim.Pages
             foreach (var member in League.memRank)
             {
                 var memberUri = $"https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/{member.guid}/{member.teamNo}/{SelectedRaceId}/1";
-                var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+                if (SelectedRaceId != upcomingRaceId)
+                {
+                    if (!_playerDetailsCache.TryGetValue(memberUri, out var cachedPlayerDetails))
+                    {
+                        var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+                        var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
+                        _playerDetailsCache[memberUri] = playerDetails;
+                        Players.Add(playerDetails);
+                    }
+                    else
+                    {
+                        Players.Add(cachedPlayerDetails);
+                    }
+                }
+                else
+                {
+                    var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+                    var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
+                    Players.Add(playerDetails);
+                }
 
-                var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
-                Players.Add(playerDetails);
             }
 
             UpdatePlayers(Players, driversAndConstructors);
@@ -67,6 +85,8 @@ namespace F1FantasySim.Pages
         {
             foreach (var playerDetail in Players) // Assuming Players is a list of PlayerDetails
             {
+                if (playerDetail?.userTeam == null) continue;
+
                 foreach (var userTeam in playerDetail.userTeam)
                 {
                     userTeam.teamname = WebUtility.UrlDecode(userTeam.teamname);
@@ -112,6 +132,12 @@ namespace F1FantasySim.Pages
                 string content = await response.Content.ReadAsStringAsync();
                 var jsonObject = JObject.Parse(content);
                 return jsonObject["Data"]["Value"].ToObject<T>();
+            }
+            else
+            {
+                string content = await response.Content.ReadAsStringAsync();
+
+                throw new Exception($"failed request with: {content}. statuscode: {response.StatusCode}");
             }
             return default;
         }

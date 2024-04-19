@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "F1FantasySim", "F1FantasySi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "F1FantasyTests", "F1FantasyTests\F1FantasyTests.csproj", "{A17F52CF-BA25-444D-B6E5-42D051199606}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenRefresher", "TokenRefresher\TokenRefresher.csproj", "{AC3DB054-1FE2-4718-9539-417CBCFF2962}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{A17F52CF-BA25-444D-B6E5-42D051199606}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A17F52CF-BA25-444D-B6E5-42D051199606}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A17F52CF-BA25-444D-B6E5-42D051199606}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC3DB054-1FE2-4718-9539-417CBCFF2962}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC3DB054-1FE2-4718-9539-417CBCFF2962}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC3DB054-1FE2-4718-9539-417CBCFF2962}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC3DB054-1FE2-4718-9539-417CBCFF2962}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

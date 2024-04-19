@@ -51,6 +51,8 @@
             }
             @foreach (var playerDetail in Model.Players)
             {
+                if (playerDetail?.userTeam == null) continue;
+
                 foreach (var userTeam in playerDetail.userTeam)
                 {
                     <tr>
