@@ -12,6 +12,6 @@ internal class Program
         await page.GoToAsync("https://account.formula1.com/#/en/login");
         await page.EvaluateExpressionHandleAsync("document.fonts.ready"); // Wait for fonts to be loaded. Omitting this might result in no text rendered in pdf.
         await page.PdfAsync("test.pdf");
-        await page.ClickAsync("")
+        //await page.ClickAsync("")
     }
 }

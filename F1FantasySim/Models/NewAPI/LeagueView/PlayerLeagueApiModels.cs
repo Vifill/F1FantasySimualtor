@@ -57,7 +57,7 @@ namespace F1FantasySim.Models.NewAPI.LeagueView
         public int? islateonboard { get; set; }
         public int? mgcapplayerid { get; set; }
         public string race_category { get; set; }
-        public int? finalfxracecat { get; set; }
+        public string? finalfxracecat { get; set; }
         public int? finalfxraceday { get; set; }
         public int? isboostertaken { get; set; }
         public int? extradrstakengd { get; set; }
