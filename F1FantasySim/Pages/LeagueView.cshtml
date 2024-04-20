@@ -75,7 +75,7 @@
 
                                     <span>
                                         @lastName.Substring(0, safeLength)
-                                        @if (player.iscaptain == 1)
+                                        @if (player.id == userTeam.capplayerid)
                                         {
                                             <i class="fas fa-bolt" title="Captain"></i> @* Lightning icon for captain *@
                                         }
