@@ -1,0 +1,71 @@
+﻿@page
+@using System.Text.Json
+@using F1FantasySim.Models
+@model F1FantasySim.Pages.RadioChatModel
+@{
+    ViewData["Title"] = "Radio Chat";
+}
+
+<h1>Select a Circuit, Session, and Team</h1>
+
+<form method="post">
+    <label for="circuitDropdown">Circuit:</label>
+    <select id="circuitDropdown" name="SelectedCircuit" onchange="populateSessions()">
+        <option value="">Select a circuit</option>
+        @foreach (var circuit in Model.CircuitSessions.Keys)
+        {
+            <option value="@circuit">@circuit</option>
+        }
+    </select>
+
+    <label for="sessionDropdown">Session:</label>
+    <select id="sessionDropdown" name="SelectedSession">
+        <option value="">Select a session</option>
+    </select>
+
+    <label for="teamDropdown">Team:</label>
+    <select id="teamDropdown" name="SelectedTeam">
+        <option value="">Select a team</option>
+        @foreach (var team in Constants.TeamNames)
+        {
+            <option value="@team">@team</option>
+        }
+    </select>
+
+    <input type="submit" value="Select" />
+</form>
+
+@if (Model.DriverRecordings.Count > 0)
+{
+    <h2>Driver Recordings</h2>
+    <ul>
+        @foreach (var recording in Model.DriverRecordings)
+        {
+            <li>@recording.Key: <a href="@recording.Value">Listen</a></li>
+        }
+    </ul>
+}
+
+@section Scripts {
+    <script>
+        const circuitSessions = @Html.Raw(JsonSerializer.Serialize(Model.CircuitSessions));
+
+        function populateSessions() {
+            const circuitDropdown = document.getElementById('circuitDropdown');
+            const sessionDropdown = document.getElementById('sessionDropdown');
+            const selectedCircuit = circuitDropdown.value;
+
+            // Clear previous options
+            sessionDropdown.innerHTML = '<option value="">Select a session</option>';
+
+            if (selectedCircuit && circuitSessions[selectedCircuit]) {
+                circuitSessions[selectedCircuit].forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.SessionKey; // SessionKey
+                    option.text = session.SessionName; // SessionName
+                    sessionDropdown.appendChild(option);
+                });
+            }
+        }
+    </script>
+}
