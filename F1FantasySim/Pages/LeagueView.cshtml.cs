@@ -44,11 +44,15 @@ namespace F1FantasySim.Pages
 
             string driversUrl = $"{DriverURL}{SelectedRaceId}_en.json";
 
+            Console.WriteLine($"Player Cookies {_apiSettings.PlayerCookies}");
+            Console.WriteLine($"League Cookies {_apiSettings.LeagueCookies}");
+
             var driversAndConstructorsRequest = CreateHttpRequestMessage(driversUrl, null); // No cookies needed for this request
             var driversAndConstructors = await GetApiDataUsingRequest<List<DriverApiModel>>(driversAndConstructorsRequest);
 
             var leagueRequest = CreateHttpRequestMessage(LeagueURL, _apiSettings.LeagueCookies);
             League = await GetApiDataUsingRequest<LeagueApiModel>(leagueRequest);
+
 
             Players = new List<PlayerDetails>();
             foreach (var member in League.memRank)

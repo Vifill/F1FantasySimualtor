@@ -6,44 +6,60 @@
     ViewData["Title"] = "Radio Chat";
 }
 
-<h1>Select a Circuit, Session, and Team</h1>
+<h1 class="mb-4">Select a Circuit, Session, and Team</h1>
 
-<form method="post">
-    <label for="circuitDropdown">Circuit:</label>
-    <select id="circuitDropdown" name="SelectedCircuit" onchange="populateSessions()">
-        <option value="">Select a circuit</option>
-        @foreach (var circuit in Model.CircuitSessions.Keys)
-        {
-            <option value="@circuit">@circuit</option>
-        }
-    </select>
+<form method="post" class="mb-4">
+    <div class="form-group">
+        <label for="circuitDropdown">Circuit:</label>
+        <select id="circuitDropdown" name="FormModel.SelectedCircuit" class="form-control" onchange="populateSessions()">
+            <option value="">Select a circuit</option>
+            @foreach (var circuit in Model.CircuitSessions.Keys)
+            {
+                <option value="@circuit">@circuit</option>
+            }
+        </select>
+    </div>
 
-    <label for="sessionDropdown">Session:</label>
-    <select id="sessionDropdown" name="SelectedSession">
-        <option value="">Select a session</option>
-    </select>
+    <div class="form-group">
+        <label for="sessionDropdown">Session:</label>
+        <select id="sessionDropdown" name="FormModel.SelectedSession" class="form-control">
+            <option value="">Select a session</option>
+        </select>
+    </div>
 
-    <label for="teamDropdown">Team:</label>
-    <select id="teamDropdown" name="SelectedTeam">
-        <option value="">Select a team</option>
-        @foreach (var team in Constants.TeamNames)
-        {
-            <option value="@team">@team</option>
-        }
-    </select>
+    <div class="form-group">
+        <label for="teamDropdown">Team:</label>
+        <select id="teamDropdown" name="FormModel.SelectedTeam" class="form-control">
+            <option value="">Select a team</option>
+            @foreach (var team in Constants.TeamNames)
+            {
+                <option value="@team">@team</option>
+            }
+        </select>
+    </div>
 
-    <input type="submit" value="Select" />
+    <button type="submit" class="btn btn-primary">Select</button>
 </form>
 
-@if (Model.DriverRecordings.Count > 0)
+@if (Model?.DriverRecordings?.Count > 0)
 {
-    <h2>Driver Recordings</h2>
-    <ul>
-        @foreach (var recording in Model.DriverRecordings)
-        {
-            <li>@recording.Key: <a href="@recording.Value">Listen</a></li>
-        }
-    </ul>
+    <div class="recordings-list">
+        <h2>Driver Recordings</h2>
+        <ul class="list-group">
+            @foreach (var driver in Model.DriverRecordings)
+            {
+                @foreach (var recording in driver.Value)
+                {
+                    <li class="list-group-item recording-item">
+                        <strong>@driver.Key:</strong>
+                        <a href="@Html.Encode(recording.RecordingUrl)" class="btn btn-link">Listen</a>
+                        <span class="recording-date"><strong>Date:</strong> @recording.Date.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                        <span class="recording-transcription"><strong>Transcription:</strong> @Html.Encode(recording.Transcription)</span>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
 }
 
 @section Scripts {
@@ -66,6 +82,12 @@
                     sessionDropdown.appendChild(option);
                 });
             }
+        }
+
+        // Call populateSessions() on page load to maintain session dropdown state
+        window.onload = function () {
+            populateSessions();
+            document.getElementById('sessionDropdown').value = "@Model.FormModel.SelectedSession";
         }
     </script>
 }
