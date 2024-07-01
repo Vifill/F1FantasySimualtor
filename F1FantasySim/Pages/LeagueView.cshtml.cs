@@ -4,6 +4,7 @@ using F1FantasySim.Models.NewAPI.LeagueView;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Net;
 
 namespace F1FantasySim.Pages
@@ -12,7 +13,7 @@ namespace F1FantasySim.Pages
     {
         private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3";
         private const string DriverURL = "https://fantasy.formula1.com/feeds/drivers/";
-        private const string LeagueURL = "https://fantasy.formula1.com/services/user/leaderboard/87eedb8a-d4a9-11ee-938e-5f8047180a36/pvtleagueuserrankget/1/353108/0/1/1/200/";
+        private const string LeagueURL = "https://fantasy.formula1.com/services/user/leaderboard/87eedb8a-d4a9-11ee-938e-5f8047180a36/pvtleagueuserrankget/1/353108/0/1/1/300/";
 
         private readonly ApiSettings _apiSettings;
         private readonly HttpClient _httpClient;
@@ -30,6 +31,41 @@ namespace F1FantasySim.Pages
             _utils = new Utils();
             _apiSettings = options.Value;
         }
+
+        //public async Task OnGetAsync(int? raceId)
+        //{
+        //    // Fetch the upcoming race ID. If raceId query parameter is provided, use it; otherwise, fetch the default upcoming race ID.
+        //    var upcomingRaceId = await _utils.GetUpcomingRace(_httpClient);
+
+        //    // Ensure the SelectedRaceId property is set to the used race ID
+        //    SelectedRaceId = raceId ?? upcomingRaceId;
+
+        //    // Populate AvailableRaceIds with IDs from 1 to upcomingRaceId
+        //    AvailableRaceIds = Enumerable.Range(1, upcomingRaceId).ToList();
+
+        //    string driversUrl = $"{DriverURL}{SelectedRaceId}_en.json";
+
+        //    Console.WriteLine($"Player Cookies {_apiSettings.PlayerCookies}");
+        //    Console.WriteLine($"League Cookies {_apiSettings.LeagueCookies}");
+
+        //    var driversAndConstructorsRequest = CreateHttpRequestMessage(driversUrl, null); // No cookies needed for this request
+        //    var driversAndConstructors = await GetApiDataUsingRequest<List<DriverApiModel>>(driversAndConstructorsRequest);
+
+        //    var leagueRequest = CreateHttpRequestMessage(LeagueURL, _apiSettings.LeagueCookies);
+        //    League = await GetApiDataUsingRequest<LeagueApiModel>(leagueRequest);
+
+        //    Players = new List<PlayerDetails>();
+        //    foreach (var member in League.memRank)
+        //    {
+        //        var memberUri = $"https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/{member.guid}/{member.teamNo}/{SelectedRaceId}/1";
+        //        var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+
+        //        var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
+        //        Players.Add(playerDetails);
+        //    }
+
+        //    UpdatePlayers(Players, driversAndConstructors);
+        //}
 
         public async Task OnGetAsync(int? raceId)
         {
@@ -53,15 +89,24 @@ namespace F1FantasySim.Pages
             var leagueRequest = CreateHttpRequestMessage(LeagueURL, _apiSettings.LeagueCookies);
             League = await GetApiDataUsingRequest<LeagueApiModel>(leagueRequest);
 
-
             Players = new List<PlayerDetails>();
+
+            var playerScores = new Dictionary<string, Dictionary<int, int>>();
             foreach (var member in League.memRank)
             {
-                var memberUri = $"https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/{member.guid}/{member.teamNo}/{SelectedRaceId}/1";
-                var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+                int totalScore = 0;
+                Dictionary<int, int> playerScore = new Dictionary<int, int>();
+                for (int i = 1; i <= upcomingRaceId; i++)
+                {
+                    var memberUri = $"https://fantasy.formula1.com/services/user/opponentteam/opponentgamedayplayerteamget/1/{member.guid}/{member.teamNo}/i/1";
+                    var playerRequest = CreateHttpRequestMessage(memberUri, _apiSettings.PlayerCookies);
+                    var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
+                    var score = playerDetails.userTeam.SelectMany(a => a.playerid).Sum(a => int.Parse(a.DriverDetails.GamedayPoints));
+                    totalScore += score;
+                    playerScore.Add(i, totalScore);
+                }
 
-                var playerDetails = await GetApiDataUsingRequest<PlayerDetails>(playerRequest);
-                Players.Add(playerDetails);
+                playerScores.Add(member.teamName, playerScore);
             }
 
             UpdatePlayers(Players, driversAndConstructors);
