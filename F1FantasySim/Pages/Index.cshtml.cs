@@ -68,8 +68,6 @@ namespace F1FantasySim.Pages
 			}
 		}
 
-		
-
 		public async Task<IActionResult> OnPost(int[] ids, int[] qualifyingIds)
         {
             await GetApiDataAsync();

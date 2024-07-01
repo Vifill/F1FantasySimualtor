@@ -43,6 +43,9 @@
 
 @if (Model?.DriverRecordings?.Count > 0)
 {
+
+
+
     <div class="recordings-list">
         <h2>Driver Recordings</h2>
         <ul class="list-group">
@@ -54,7 +57,7 @@
                         <strong>@driver.Key:</strong>
                         <a href="@Html.Encode(recording.RecordingUrl)" class="btn btn-link">Listen</a>
                         <span class="recording-date"><strong>Date:</strong> @recording.Date.ToString("yyyy-MM-dd HH:mm:ss")</span>
-                        <span class="recording-transcription"><strong>Transcription:</strong> @Html.Encode(recording.Transcription)</span>
+                        <span class="recording-transcription"><strong>Transcription:</strong> @recording.Transcription</span>
                     </li>
                 }
             }

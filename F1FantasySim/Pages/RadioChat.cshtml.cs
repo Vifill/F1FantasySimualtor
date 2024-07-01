@@ -14,6 +14,8 @@ using OpenAI.Audio;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System;
+using OpenAI.Chat;
 
 namespace F1FantasySim.Pages
 {
@@ -28,6 +30,7 @@ namespace F1FantasySim.Pages
 
         [BindNever]
         public Dictionary<string, List<DriverRecording>> DriverRecordings { get; set; }
+        public string Summarization;
 
         // Cache for transcriptions
         private readonly Dictionary<string, string> _transcriptionCache = new Dictionary<string, string>();
