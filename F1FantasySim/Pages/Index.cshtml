@@ -213,6 +213,7 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
     <script type="text/javascript">
         $(function () {
+            // Helper function for sortable
             var fixHelperModified = function (e, tr) {
                 var $originals = tr.children();
                 var $helper = tr.clone();
@@ -222,180 +223,67 @@
                 return $helper;
             };
 
-            function updatePositions(selector) {
-                $(selector).each(function (index) {
-                    $(this).children('.position').html(index + 1);
-                });
-            }
-
-            var debouncedUpdatePositions = debounce(updatePositions, 100);
-
-            $(document).ready(function () {
-                $('[data-toggle="tooltip"]').tooltip({
-                    html: true, // Allow HTML in the tooltip
-                });
-
-                // Initialize sortable and update positions for the race results table
-                $("#sortable").sortable({
-                    helper: fixHelperModified,
-                    cancel: ".ui-state-disabled",
-                    items: "tr:not(.ui-state-disabled)",
-                    update: function (event, ui) {
-                        debouncedUpdatePositions("#sortable .list-item");
-                    }
-                }).disableSelection();
-
-                // Initialize sortable and update positions for the qualifying results table
-                $("#sortable-qualifying").sortable({
-                    helper: fixHelperModified,
-                    cancel: ".ui-state-disabled",
-                    items: "tr:not(.ui-state-disabled)",
-                    update: function (event, ui) {
-                        debouncedUpdatePositions("#sortable-qualifying .list-item");
-                    }
-                }).disableSelection();
-
-                // Initial position numbers
-                debouncedUpdatePositions("#sortable .list-item");
-                debouncedUpdatePositions("#sortable-qualifying .list-item");
-
-                // Function to copy order from one table to another
-                function copyOrder(sourceTableSelector, targetTableSelector) {
-                    var orderMap = [];
-
-                    $(sourceTableSelector + ' .list-item').each(function () {
-                        var id = this.id; // Using the full ID as the identifier
-                        orderMap.push(id);
-                    });
-
-                    orderMap.forEach(function (id) {
-                        var rowToMove = $(targetTableSelector + ' .list-item#' + id).detach();
-                        $(targetTableSelector).append(rowToMove);
-                    });
-
-                    // Update positions in the target table after copying the order
-                    debouncedUpdatePositions(targetTableSelector + ' .list-item');
-                    saveOrderToLocalStorage('#sortable', 'raceOrder');
-                    saveOrderToLocalStorage('#sortable-qualifying', 'qualifyingOrder');
-                }
-
-                $('#copyOrderToQualifying').click(function () {
-                    console.log('Copying order to Qualifying...');
-                    copyOrder('#sortable', '#sortable-qualifying');
-                });
-
-                $('#copyOrderToRace').click(function () {
-                    console.log('Copying order to Race...');
-                    copyOrder('#sortable-qualifying', '#sortable');
-                });
-
-                // --- Local Storage Functions ---
-                function saveOrderToLocalStorage(tableSelector, storageKey) {
-                    var order = [];
-                    $(tableSelector + ' .list-item').each(function () {
-                        order.push(this.id); // Assuming the ID is sufficient to identify the row
-                    });
-                    localStorage.setItem(storageKey, JSON.stringify(order));
-                }
-
-                // Example usage after updating the order in your sortable table:
-                $("#sortable, #sortable-qualifying").on("sortupdate", function (event, ui) {
-                    saveOrderToLocalStorage('#sortable', 'raceOrder');
-                    saveOrderToLocalStorage('#sortable-qualifying', 'qualifyingOrder');
-                });
-
-                function applyOrderFromLocalStorage(tableSelector, storageKey) {
-                    var order = JSON.parse(localStorage.getItem(storageKey));
-                    if (!order) return; // If there's no order saved, do nothing
-
-                    order.forEach(function (id) {
-                        var row = $(tableSelector + ' .list-item#' + id).detach();
-                        $(tableSelector).append(row);
-                    });
-                }
-
-                // Example usage on page load:
-                function applyOrderWithFallback(tableSelector, storageKey) {
-                    var storedOrder = JSON.parse(localStorage.getItem(storageKey));
-                    if (!storedOrder) return; // If there's no order saved, do nothing
-
-                    // Get current IDs from the table
-                    var currentIds = $(tableSelector + ' .list-item').map(function () {
-                        return this.id;
-                    }).get();
-
-                    // Check for any IDs in the current table that are not in the stored order
-                    var isDiscrepancy = currentIds.some(id => !storedOrder.includes(id));
-
-                    if (isDiscrepancy) {
-                        console.log("Discrepancy found. Using default order.");
-                        // Optional: Apply a specific default order here if desired
-                        return; // Exit the function without applying the stored order
-                    }
-
-                    // No discrepancy, apply the stored order
-                    storedOrder.forEach(function (id) {
-                        var row = $(tableSelector + ' .list-item#' + id).detach();
-                        $(tableSelector).append(row);
-                    });
-
-                    // Update positions after reordering
-                    debouncedUpdatePositions(tableSelector + ' .list-item');
-                }
-
-                function observeTableChanges(tableSelector) {
-                    var tableElement = document.querySelector(tableSelector);
-
-                    // Create a new MutationObserver instance
-                    var observer = new MutationObserver(function (mutations) {
-                        mutations.forEach(function (mutation) {
-                            if (mutation.type === 'childList') {
-                                // Call updatePositions whenever there are changes in the table's children (rows)
-                                debouncedUpdatePositions(tableSelector + ' .list-item');
-                            }
-                        });
-                    });
-
-                    // Configuration object for the observer
-                    var config = { childList: true, subtree: true };
-
-                    // Start observing the target table for configured mutations
-                    observer.observe(tableElement, config);
-                }
-
-                // Call observeTableChanges for each table you want to observe
-                $(document).ready(function () {
-                    observeTableChanges('#sortable');
-                    observeTableChanges('#sortable-qualifying');
-                    applyOrderWithFallback('#sortable', 'raceOrder');
-                    applyOrderWithFallback('#sortable-qualifying', 'qualifyingOrder');
-                });
+            // Initialize tooltips
+            $('[data-toggle="tooltip"]').tooltip({
+                html: true
             });
 
-            function numericSorter(a, b) {
-                a = parseFloat(a);
-                b = parseFloat(b);
+            // Update position numbers
+            var updatePositions = function (table) {
+                $(table).find('tr').each(function (index) {
+                    $(this).find('.position').text(index + 1);
+                });
+            };
 
-                if (isNaN(a)) {
-                    a = 0; // or a large negative number to ensure it sorts to the bottom
+            // Initialize sortable for both tables
+            $("#sortable, #sortable-qualifying").sortable({
+                helper: fixHelperModified,
+                items: "tr",
+                connectWith: ".connected-sortable",
+                start: function (e, ui) {
+                    ui.placeholder.height(ui.item.height());
+                },
+                stop: function (event, ui) {
+                    updatePositions(ui.item.parent());
                 }
-                if (isNaN(b)) {
-                    b = 0; // or a large negative number to ensure it sorts to the bottom
-                }
+            }).disableSelection();
 
-                console.log('numeric sorter');
+            // Initial position numbers
+            updatePositions("#sortable");
+            updatePositions("#sortable-qualifying");
+
+            // Copy order between tables
+            function copyOrder(sourceSelector, targetSelector) {
+                var $source = $(sourceSelector);
+                var $target = $(targetSelector);
+
+                $source.find('tr').each(function () {
+                    var id = $(this).attr('id');
+                    var $existingRow = $target.find('#' + id);
+                    if ($existingRow.length) {
+                        $existingRow.remove();
+                    }
+                    $target.append($(this).clone());
+                });
+
+                updatePositions(targetSelector);
+            }
+
+            $('#copyOrderToQualifying').click(function () {
+                copyOrder('#sortable', '#sortable-qualifying');
+            });
+
+            $('#copyOrderToRace').click(function () {
+                copyOrder('#sortable-qualifying', '#sortable');
+            });
+
+            // Numeric sorter for table columns
+            window.numericSorter = function (a, b) {
+                a = parseFloat(a) || 0;
+                b = parseFloat(b) || 0;
                 return a - b;
-            }
-
-            // Debounce function to limit how often a function can fire
-            function debounce(func, wait) {
-                let timeout;
-                return function (...args) {
-                    const context = this;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(context, args), wait);
-                };
-            }
+            };
+        });
     </script>
 }
 

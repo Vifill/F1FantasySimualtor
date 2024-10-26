@@ -8,7 +8,7 @@ using System.Net;
 
 namespace F1FantasySim.Pages
 {
-    public class LeagueViewModel : PageModel
+    public class LeagueViewModel : BaseViewModel
     {
         private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3";
         private const string DriverURL = "https://fantasy.formula1.com/feeds/drivers/";
@@ -86,25 +86,6 @@ namespace F1FantasySim.Pages
                     }
                     userTeam.playerid = userTeam.playerid.OrderBy(a=> a.DriverDetails.IsConstructor()).ThenByDescending(a => a.DriverDetails.Value).ToList();
                 }
-            }
-        }
-
-        private HttpRequestMessage CreateHttpRequestMessage(string url, string cookies)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("User-Agent", UserAgent);
-            if (!string.IsNullOrWhiteSpace(cookies))
-            {
-                AddCookiesToRequest(request, cookies);
-            }
-            return request;
-        }
-
-        private void AddCookiesToRequest(HttpRequestMessage request, string cookies)
-        {
-            if (!string.IsNullOrWhiteSpace(cookies))
-            {
-                request.Headers.Add("Cookie", cookies);
             }
         }
 
